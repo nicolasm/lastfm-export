@@ -1,5 +1,5 @@
 # lastfm-export
-### Export your Last.fm tracks and import it into a MySQL database
+### Export your Last.fm tracks and import them into a MySQL database
 
 This script imports your Last.fm listening history inside a MySQL database.
 
