@@ -14,4 +14,26 @@ I have changed it in the following ways:
 - reading user logins, passwords from .netrc
 - insert the tracks in order of play
 
+I provide a SQL script to create the database. The data model is made of:
+- five tables
+    - artist
+    - album
+    - track
+    - play              ->  corresponds to the Last.fm track notion
+    - various_artist    ->  album names are various artists albums, compilations...
+- a insert_play stored procedure that:
+    - finds the artist, album, track in the database or inserts them if not found.
+    - inserts the play with the previous found or created elements.
+- several views:
+    - top artists/albums/tracks for the last 7, 30, 90, 365 days and all time.
+    - view_plays
+    - view_play_count_by_month
+- a nb_days function used in the views.
+
+Give execution rights to the Python script:
+chmod u+x exportLastfm2Mysql.py
+
+Call the Python script with your Last.fm username:
+./exportLastfm2Mysql.py username
+
 Copyright (c) 2015, Nicolas Meier
