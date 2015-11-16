@@ -6,7 +6,8 @@ This script imports your Last.fm listening history inside a MySQL database.
 The original script has been developed by Matthew Lewis:
 http://mplewis.com/files/lastfm-scraper.html
 It was coded to do a one-time import in a SQLite database.
-Copyright (c) 2014+2015, Matthew Lewis
+
+Copyright (c) 2014-2015, Matthew Lewis
 
 I have changed it in the following ways:                          
 - MySQL with a normalised database                                
