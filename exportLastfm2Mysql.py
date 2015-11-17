@@ -97,6 +97,10 @@ total_plays_in_db = retrieve_total_plays_from_db()
 # Compute the number of pages to get to be up-to-date.
 total_pages = int(math.ceil((float(total_plays_in_lastfm) - float(total_plays_in_db)) / per_page));
 
+if total_pages == 0:
+    print 'Nothing to update!'
+    sys.exit(1)
+
 all_pages = []
 for page_num in xrange(total_pages, 0, -1):
     print 'Page', page_num, 'of', total_pages
@@ -114,7 +118,7 @@ for page_num, page in enumerate(all_pages):
     if tracks[0].get('@attr'):
         if tracks[0]['@attr']['nowplaying'] == 'true':
             tracks.pop(0)
-    
+
     ## Get only the missing tracks.
     if page_num == 0:
 	    tracks = tracks[0: (total_plays_in_lastfm - total_plays_in_db) % per_page]
