@@ -8,6 +8,8 @@ SET GLOBAL innodb_file_per_table = ON,
 
 CREATE DATABASE IF NOT EXISTS `lastfm` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 
+USE lastfm;
+
 CREATE TABLE `artist` (
   `artist_db_id` int(11) NOT NULL AUTO_INCREMENT,
   `artist_name` varchar(512) NOT NULL,
@@ -188,3 +190,11 @@ BEGIN
 end;
 //
 DELIMITER ;
+
+# Grant rights
+USE mysql;
+
+CREATE USER 'lastfm' IDENTIFIED BY 'password';
+GRANT SELECT, INSERT, UPDATE, CREATE VIEW ON `lastfm`.* TO 'lastfm';
+GRANT EXECUTE ON PROCEDURE `lastfm`.`insert_play` TO 'lastfm';
+GRANT EXECUTE ON FUNCTION `lastfm`.`nb_days` TO 'lastfm';
