@@ -174,11 +174,11 @@ for page_num, page in enumerate(all_pages):
                         if not check_track_in_db(name_without_featuring, artist_name, album_name):
                             info = track_info(api_key, artist_name, name_without_featuring)
                             info = process_track(info)
+                        else:
+                            print("Track already in db", track_name, artist_name, album_name)
                     except:
-                        print(track_name, ', ', artist_name, ', ', album_name)
+                        print(track_name, artist_name, album_name)
                         print(info)
-            else:
-                print("Track already in db", track_name, ', ', artist_name, ', ', album_name)
 
             if (not (info.get("track_duration")) or (info["track_duration"] == "0")):
                 m = re.match('(.*)\s*\(.*\)', track_name)
@@ -187,15 +187,15 @@ for page_num, page in enumerate(all_pages):
                     if not check_track_in_db(name_without_comment, artist_name, album_name):
                         info = track_info(api_key, artist_name, name_without_comment)
                         info = process_track(info)
-            else:
-                print("Track already in db", track_name, ', ', artist_name, ', ', album_name)
+                    else:
+                        print("Track already in db", track_name, artist_name, album_name)
 
             if (info.get("track_duration")):
                 track_duration = info["track_duration"]
             else:
                 track_duration = '0'
         else:
-            print("Track already in db", track_name, ', ', artist_name, ', ', album_name)
+            print("Track already in db", track_name, artist_name, album_name)
 
             # Cut artist name if too long.
         if len(artist_name) > 512:
