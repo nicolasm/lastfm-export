@@ -29,7 +29,6 @@ import netrc
 import MySQLdb
 import re
 import urllib
-import string
 import zc.lockfile
 
 lock = zc.lockfile.LockFile('lock')
@@ -57,8 +56,6 @@ api_key = login[2]
 per_page = 200
 api_url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%s&limit=%s'
 track_api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=%s&format=json&artist=%s&track=%s&autocorrect=1'
-
-printable = set(string.printable)
 
 def recent_tracks(user, api_key, page, limit):
     """Get the most recent tracks from `user` using `api_key`. Start at page `page` and limit results to `limit`."""
@@ -149,7 +146,10 @@ for page_num, page in enumerate(all_pages):
         tracks = tracks[0: (total_plays_in_lastfm - total_plays_in_db) % per_page]
 
     # On each page, iterate through all tracks
-    for track in reversed(tracks):
+    num_tracks = len(tracks)
+    for track_num, track in enumerate(reversed(tracks)):
+        print('Track', track_num + 1, 'of', num_tracks)
+
         # Process each track and insert it into the `tracks` table
         transformed_track = process_track(track)
 
@@ -174,8 +174,6 @@ for page_num, page in enumerate(all_pages):
                         if not check_track_in_db(name_without_featuring, artist_name, album_name):
                             info = track_info(api_key, artist_name, name_without_featuring)
                             info = process_track(info)
-                        else:
-                            print("Track already in db", track_name, artist_name, album_name)
                     except:
                         print(track_name, artist_name, album_name)
                         print(info)
@@ -187,15 +185,11 @@ for page_num, page in enumerate(all_pages):
                     if not check_track_in_db(name_without_comment, artist_name, album_name):
                         info = track_info(api_key, artist_name, name_without_comment)
                         info = process_track(info)
-                    else:
-                        print("Track already in db", track_name, artist_name, album_name)
 
             if (info.get("track_duration")):
                 track_duration = info["track_duration"]
             else:
                 track_duration = '0'
-        else:
-            print("Track already in db", track_name, artist_name, album_name)
 
             # Cut artist name if too long.
         if len(artist_name) > 512:
