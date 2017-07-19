@@ -29,9 +29,6 @@ import netrc
 import MySQLdb
 import re
 import urllib
-import zc.lockfile
-
-lock = zc.lockfile.LockFile('lock')
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -120,7 +117,6 @@ total_pages = int(math.ceil((float(total_plays_in_lastfm) - float(total_plays_in
 
 if total_pages == 0:
     print('Nothing to update!')
-    lock.close()
     sys.exit(1)
 
 all_pages = []
@@ -212,11 +208,9 @@ for page_num, page in enumerate(all_pages):
                          album_name,
                          transformed_track['album_mbid']))
         except:
-            print int(track_duration)
+            print(int(track_duration))
             print(track_name, ', ', artist_name)
             print(info)
 
 # Display number of plays in database.
 print('Done!', retrieve_total_plays_from_db(), 'rows in table `play.')
-
-lock.close()
