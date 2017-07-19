@@ -41,6 +41,7 @@ CREATE TABLE `track` (
   `artist_db_id` int(11) DEFAULT '0',
   `album_db_id` int(11) DEFAULT '0',
   `track_name` varchar(512) DEFAULT NULL,
+  `track_duration` time null,
   `track_url` text,
   `track_mbid` varchar(36) DEFAULT NULL,
   `creation_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,7 +129,7 @@ order by play_count desc
 limit 10;
 
 DELIMITER //
-CREATE DEFINER=`lastfm`@`%` PROCEDURE `insert_play`(IN track_name_in varchar(512), IN track_mbid_in varchar(36), IN track_url_in text, IN play_date_uts_in varchar(10), IN artist_name_in text, IN artist_mbid_in varchar(36), IN album_name_in varchar(256), IN album_mbid_in varchar(36))
+CREATE DEFINER=`lastfm`@`%` PROCEDURE `insert_play`(IN track_name_in varchar(512), IN track_duration_in int, IN track_mbid_in varchar(36), IN track_url_in text, IN play_date_uts_in varchar(10), IN artist_name_in text, IN artist_mbid_in varchar(36), IN album_name_in varchar(256), IN album_mbid_in varchar(36))
     MODIFIES SQL DATA
     DETERMINISTIC
 BEGIN
@@ -174,8 +175,8 @@ BEGIN
 
 	## Create if not found
 	if (found_track_db_id is null) then
-		insert into track(artist_db_id, album_db_id, track_name, track_mbid, track_url)
-		values (found_artist_db_id, found_album_db_id, track_name_in, track_mbid_in, track_url_in);
+		insert into track(artist_db_id, album_db_id, track_name, track_duration, track_mbid, track_url)
+      values (found_artist_db_id, found_album_db_id, track_name_in, sec_to_time(track_duration_in), track_mbid_in, track_url_in);
 	
 		select t.track_db_id from track t
 		where (t.track_name = track_name_in and t.artist_db_id = found_artist_db_id and t.album_db_id = found_album_db_id and found_album_db_id is not null)
@@ -190,6 +191,59 @@ BEGIN
 end;
 //
 DELIMITER ;
+
+create function check_track_in_db (track_name_in varchar(512), artist_name_in text, album_name_in varchar(256)) returns tinyint(1)
+begin
+    declare found_artist_db_id int;
+    declare found_album_db_id int;
+    declare found_track_db_id int;
+    declare va_artist_name varchar(512);
+
+    select v.va_artist_name
+    from various_artists v
+    where v.va_album_name = album_name_in
+    into va_artist_name;
+    if (va_artist_name is not null)
+    then
+      select va_artist_name
+      from dual
+      into artist_name_in;
+    end if;
+
+    select a.artist_db_id
+    from artist a
+    where a.artist_name = artist_name_in
+    into found_artist_db_id;
+
+    if (found_artist_db_id is null)
+    then
+      return false;
+    end if;
+
+    if (album_name_in is not null)
+    then
+      select a.album_db_id
+      from album a
+      where a.album_name = album_name_in and a.artist_db_id = found_artist_db_id
+      into found_album_db_id;
+
+      if (found_album_db_id is null)
+      then
+        return false;
+      end if;
+    end if;
+
+    select t.track_db_id
+    from track t
+    where
+      (t.track_name = track_name_in and t.artist_db_id = found_artist_db_id and t.album_db_id = found_album_db_id and
+       found_album_db_id is not null)
+      or (t.track_name = track_name_in and t.artist_db_id = found_artist_db_id and found_album_db_id is null and
+          t.album_db_id is null)
+    into found_track_db_id;
+
+    return found_track_db_id is not null;
+end;
 
 # Grant rights
 USE mysql;
