@@ -135,8 +135,7 @@ create view view_top_artists_for_last_n_days as
         and t.artist_db_id = a.artist_db_id
         and (nb_days() is not null and p.play_date > date_add(CURRENT_TIMESTAMP, interval -nb_days() day)
              or nb_days() is null)
-        and a.artist_name not in (select distinct v.va_artist_name
-                                  from various_artists v)
+        and (not ((`a`.`artist_name` like 'VA %')))
   group by a.artist_name
   order by play_count desc
   limit 10;
