@@ -22,8 +22,9 @@ create table `artist` (
   key `idx_artist_name` (`artist_name`(255)) using btree
 )
   engine = InnoDB
-  auto_increment = 1028
-  default charset = utf8;
+  default charset = utf8
+  row_format = compressed
+  ;
 
 
 create table `album` (
@@ -40,7 +41,6 @@ create table `album` (
   foreign key (`artist_db_id`) references `artist` (`artist_db_id`)
 )
   engine = InnoDB
-  auto_increment = 1495
   default charset = utf8
   row_format = compressed;
 
@@ -64,7 +64,6 @@ create table `track` (
   foreign key (`artist_db_id`) references `artist` (`artist_db_id`)
 )
   engine = InnoDB
-  auto_increment = 12128
   default charset = utf8
   row_format = compressed;
 
@@ -82,7 +81,6 @@ create table `play` (
   foreign key (`track_db_id`) references `track` (`track_db_id`)
 )
   engine = InnoDB
-  auto_increment = 31571
   default charset = utf8
   row_format = compressed;
 
@@ -97,7 +95,6 @@ create table `various_artists` (
   unique key `idx_va_album_name` (`va_album_name`) using btree
 )
   engine = InnoDB
-  auto_increment = 131
   default charset = utf8
   row_format = compressed;
 
