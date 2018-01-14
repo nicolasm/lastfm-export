@@ -101,7 +101,10 @@ create table `various_artists` (
 create function lastfm.nb_days()
   returns integer deterministic no sql return @nb_days;
 
-create view view_plays as
+create function lastfm.for_year()
+  returns integer deterministic no sql return @for_year;
+
+create or replace view view_plays as
   select
     p.play_db_id,
     t.track_name,
@@ -115,7 +118,7 @@ create view view_plays as
         and t.artist_db_id = a.artist_db_id
   order by p.play_db_id desc;
 
-create view view_play_count_by_month as
+create or replace view view_play_count_by_month as
   select
     date_format(p.play_date, '%Y-%m') as month,
     count(p.play_db_id)               as count
@@ -123,7 +126,13 @@ create view view_play_count_by_month as
   group by month
   order by month;
 
-create view view_top_artists_for_last_n_days as
+create or replace view view_play_count_for_year as
+  select
+    count(`p`.`play_db_id`) as `count`
+  from `lastfm`.`play` `p`
+  where year(p.play_date) = for_year();
+
+create or replace view view_top_artists_for_last_n_days as
 select
     `a`.`artist_name`       as `artist_name`,
     count(`p`.`play_db_id`) as `play_count`
@@ -135,8 +144,31 @@ select
   group by `a`.`artist_name`
   order by count(`p`.`play_db_id`) desc;
 
+create view view_top_artists_for_year as
+  select
+    `a`.`artist_name`       as `artist_name`,
+    count(`p`.`play_db_id`) as `play_count`
+  from ((`lastfm`.`play` `p`
+    join `lastfm`.`artist` `a`) join `lastfm`.`track` `t`)
+  where ((`p`.`track_db_id` = `t`.`track_db_id`) and (`t`.`artist_db_id` = `a`.`artist_db_id`) and
+         (((year(`p`.`play_date`) = for_year()))) and (not ((`a`.`artist_name` like 'VA %'))))
+  group by `a`.`artist_name`
+  order by count(`p`.`play_db_id`) desc;
 
-create view view_top_albums_for_last_n_days as
+create or replace view view_top_albums_for_year as
+  select
+    `b`.`album_name`        as `album_name`,
+    `a`.`artist_name`       as `artist_name`,
+    count(`p`.`play_db_id`) as `play_count`
+  from ((`lastfm`.`play` `p`
+    join `lastfm`.`artist` `a`) join
+    (`lastfm`.`track` `t` left join `lastfm`.`album` `b` on ((`b`.`album_db_id` = `t`.`album_db_id`))))
+  where ((`p`.`track_db_id` = `t`.`track_db_id`) and (`t`.`artist_db_id` = `a`.`artist_db_id`) and
+         (((year(`p`.`play_date`) = for_year()))))
+  group by `b`.`album_name`, `a`.`artist_name`
+  order by count(`p`.`play_db_id`) desc;
+
+create or replace view view_top_albums_for_last_n_days as
 select
     `b`.`album_name`        as `album_name`,
     `a`.`artist_name`       as `artist_name`,
@@ -150,7 +182,7 @@ select
   group by `b`.`album_name`, `a`.`artist_name`
   order by count(`p`.`play_db_id`) desc;
 
-create view view_top_tracks_for_last_n_days as
+create or replace view view_top_tracks_for_last_n_days as
 select
     `t`.`track_name`        as `track_name`,
     `a`.`artist_name`       as `artist_name`,
@@ -162,6 +194,20 @@ select
   where ((`p`.`track_db_id` = `t`.`track_db_id`) and (`t`.`artist_db_id` = `a`.`artist_db_id`) and
          (((`nb_days`() is not null) and (`p`.`play_date` > (now() + interval -(`nb_days`()) day))) or
           isnull(`nb_days`())))
+  group by `t`.`track_name`, `a`.`artist_name`, `b`.`album_name`
+  order by count(`p`.`play_db_id`) desc;
+
+create or replace view view_top_tracks_for_year as
+  select
+    `t`.`track_name`        as `track_name`,
+    `a`.`artist_name`       as `artist_name`,
+    `b`.`album_name`        as `album_name`,
+    count(`p`.`play_db_id`) as `play_count`
+  from ((`lastfm`.`play` `p`
+    join `lastfm`.`artist` `a`) join
+    (`lastfm`.`track` `t` left join `lastfm`.`album` `b` on ((`b`.`album_db_id` = `t`.`album_db_id`))))
+  where ((`p`.`track_db_id` = `t`.`track_db_id`) and (`t`.`artist_db_id` = `a`.`artist_db_id`) and
+         (((year(`p`.`play_date`) = for_year()))))
   group by `t`.`track_name`, `a`.`artist_name`, `b`.`album_name`
   order by count(`p`.`play_db_id`) desc;
 
@@ -333,3 +379,4 @@ create user 'lastfm'
 grant select, insert, update, create view on `lastfm`.* to 'lastfm';
 grant execute on procedure `lastfm`.`insert_play` to 'lastfm';
 grant execute on function `lastfm`.`nb_days` to 'lastfm';
+grant execute on function `lastfm`.`for_year` to 'lastfm';
