@@ -152,42 +152,12 @@ for page_num, page in enumerate(all_pages):
         artist_name = transformed_track['artist_text']
         album_name = transformed_track['album_text']
         track_name = transformed_track['name']
-        track_duration = '0'
 
         if not check_track_in_db(track_name, artist_name, album_name):
             info = track_info(api_key, artist_name, track_name)
             info = process_track(info)
 
-            if (not (info.get("track_duration")) or (info["track_duration"] == "0")):
-                m = re.match('(.*)(?:(?:-\s*|\(\s*|\s)(?:F|f)(?:t|eat|eaturing)(?:\.|\s).*)', track_name)
-                if m:
-                    name_without_featuring = m.group(1)
-                    name_without_featuring = \
-                        name_without_featuring[:-1] if ((name_without_featuring[-1:] == '-')
-                                                        or(name_without_featuring[-1:] == '('))\
-                                                    else name_without_featuring
-                    try:
-                        if not check_track_in_db(name_without_featuring, artist_name, album_name):
-                            info = track_info(api_key, artist_name, name_without_featuring)
-                            info = process_track(info)
-                    except:
-                        print(track_name, artist_name, album_name)
-                        print(info)
-
-            if (not (info.get("track_duration")) or (info["track_duration"] == "0")):
-                m = re.match('(.*)\s*\(.*\)', track_name)
-                if m:
-                    name_without_comment = m.group(1)
-                    if not check_track_in_db(name_without_comment, artist_name, album_name):
-                        info = track_info(api_key, artist_name, name_without_comment)
-                        info = process_track(info)
-
-            if (info.get("track_duration")):
-                track_duration = info["track_duration"]
-            else:
-                track_duration = '0'
-
-            # Cut artist name if too long.
+        # Cut artist name if too long.
         if len(artist_name) > 512:
             artist_name = artist_name[:512]
         
@@ -199,7 +169,6 @@ for page_num, page in enumerate(all_pages):
         try:
             mysql_cursor.callproc("insert_play",
                         (track_name,
-                         int(track_duration) / 1000,
                          transformed_track['mbid'],
                          transformed_track['url'],
                          transformed_track['date_uts'],
@@ -208,9 +177,9 @@ for page_num, page in enumerate(all_pages):
                          album_name,
                          transformed_track['album_mbid']))
         except:
-            print(int(track_duration))
             print(track_name, ', ', artist_name)
             print(info)
+	    sys.exit(1)
 
 # Display number of plays in database.
 print('Done!', retrieve_total_plays_from_db(), 'rows in table `play.')
