@@ -167,7 +167,6 @@ select
 
 delimiter //
 create definer =`lastfm`@`%` procedure `insert_play`(in track_name_in     varchar(512),
-                                                     in track_duration_in int,
                                                      in track_mbid_in     varchar(36),
                                                      in track_url_in      text,
                                                      in play_date_uts_in  varchar(10),
@@ -249,8 +248,8 @@ deterministic
     ## Create if not found
     if (found_track_db_id is null)
     then
-      insert into track (artist_db_id, album_db_id, track_name, track_duration, track_mbid, track_url)
-      values (found_artist_db_id, found_album_db_id, track_name_in, sec_to_time(track_duration_in), track_mbid_in,
+      insert into track (artist_db_id, album_db_id, track_name, track_mbid, track_url)
+      values (found_artist_db_id, found_album_db_id, track_name_in, track_mbid_in,
               track_url_in);
 
       select t.track_db_id
