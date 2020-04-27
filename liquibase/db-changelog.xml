@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="1" author="nicolas" context="Create json_track">
+        <createTable schemaName="lastfm" tableName="json_track">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="json" type="json"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="nicolas" context="tag tables">
+        <tagDatabase tag="json_track"/>
+    </changeSet>
+
+    <changeSet id="3" author="nicolas" context="Create artist table">
+        <createTable schemaName="lastfm" tableName="artist">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="artist_name" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="artist_mbid" type="varchar(36)"/>
+            <column name="creation_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="update_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <rollback>
+            <dropTable schemaName="lastfm" tableName="artist"/>
+        </rollback>
+
+        <modifySql dbms="mysql">
+            <append value="engine=InnoDB default charset=utf8 collate=utf8_unicode_ci row_format=Compressed"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="4" author="nicolas" context="Create artist index">
+        <createIndex schemaName="lastfm" tableName="artist" indexName="artist_name_idx">
+            <column name="artist_name"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex schemaName="lastfm" tableName="artist" indexName="artist_name_idx"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="5" author="nicolas" context="Create album table">
+        <createTable schemaName="lastfm" tableName="album">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="artist_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="album_name" type="varchar(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="album_mbid" type="varchar(36)"/>
+            <column name="creation_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="update_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <rollback>
+            <dropTable schemaName="lastfm" tableName="album"/>
+        </rollback>
+
+        <modifySql dbms="mysql">
+            <append value="engine=InnoDB default charset=utf8 collate=utf8_unicode_ci row_format=Compressed"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="6" author="nicolas" context="Create album indexes">
+        <createIndex schemaName="lastfm" tableName="album" indexName="album_artist_uidx" unique="true">
+            <column name="album_name"/>
+            <column name="artist_id"/>
+        </createIndex>
+        <createIndex schemaName="lastfm" tableName="album" indexName="album_name_idx">
+            <column name="album_name"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableSchemaName="lastfm"
+                                 baseTableName="album" baseColumnNames="artist_id"
+                                 constraintName="album_artist_id_fk" referencedTableName="artist"
+                                 referencedColumnNames="id"/>
+
+        <rollback>
+            <dropIndex schemaName="lastfm" tableName="album" indexName="album_artist_uidx"/>
+            <dropIndex schemaName="lastfm" tableName="album" indexName="album_name_idx"/>
+            <dropForeignKeyConstraint baseTableName="album"
+                                      constraintName="album_artist_id_fk"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="7" author="nicolas" context="Create track table">
+        <createTable schemaName="lastfm" tableName="track">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="artist_id" type="int"/>
+            <column name="album_id" type="int"/>
+            <column name="track_name" type="varchar(512)"/>
+            <column name="track_duration" type="time"/>
+            <column name="track_url" type="text"/>
+            <column name="track_mbid" type="varchar(36)"/>
+            <column name="creation_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="update_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <rollback>
+            <dropTable schemaName="lastfm" tableName="track"/>
+        </rollback>
+
+        <modifySql dbms="mysql">
+            <append value="engine=InnoDB default charset=utf8 collate=utf8_unicode_ci row_format=Compressed"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="8" author="nicolas" context="Create track indexes">
+        <createIndex schemaName="lastfm" tableName="track" indexName="track_name_idx">
+            <column name="track_name"/>
+        </createIndex>
+        <createIndex schemaName="lastfm" tableName="track" indexName="track_artist_album_uidx" unique="true">
+            <column name="track_name"/>
+            <column name="artist_id"/>
+            <column name="album_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableSchemaName="lastfm"
+                                 baseTableName="track" baseColumnNames="artist_id"
+                                 constraintName="track_artist_id_fk" referencedTableName="artist"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableSchemaName="lastfm"
+                                 baseTableName="track" baseColumnNames="album_id"
+                                 constraintName="track_album_id_fk" referencedTableName="album"
+                                 referencedColumnNames="id"/>
+
+        <rollback>
+            <dropIndex schemaName="lastfm" tableName="track" indexName="track_name_idx"/>
+            <dropIndex schemaName="lastfm" tableName="track" indexName="track_artist_album_uidx"/>
+            <dropForeignKeyConstraint baseTableName="track"
+                                      constraintName="track_artist_id_fk"/>
+            <dropForeignKeyConstraint baseTableName="track"
+                                      constraintName="track_album_id_fk"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="9" author="nicolas" context="Create play table">
+        <createTable schemaName="lastfm" tableName="play">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="track_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="play_date_uts" type="varchar(10)"/>
+            <column name="play_date" type="datetime"/>
+            <column name="creation_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="update_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <rollback>
+            <dropTable schemaName="lastfm" tableName="play"/>
+        </rollback>
+
+        <modifySql dbms="mysql">
+            <append value="engine=InnoDB default charset=utf8 collate=utf8_unicode_ci row_format=Compressed"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="10" author="nicolas" context="Create play index">
+        <createIndex schemaName="lastfm" tableName="play" indexName="play_date_idx">
+            <column name="play_date"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableSchemaName="lastfm"
+                                 baseTableName="play" baseColumnNames="track_id"
+                                 constraintName="play_track_id_fk" referencedTableName="track"
+                                 referencedColumnNames="id"/>
+
+        <rollback>
+            <dropIndex schemaName="lastfm" tableName="play" indexName="play_date_idx"/>
+            <dropForeignKeyConstraint baseTableName="play"
+                                      constraintName="play_track_id_fk"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="11" author="nicolas" context="Create artist_replacement table">
+        <createTable schemaName="lastfm" tableName="artist_replacement">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="album_name" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="artist_name" type="varchar(512)"/>
+            <column name="replace_by" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="update_date" type="timestamp" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <rollback>
+            <dropTable schemaName="lastfm" tableName="artist_replacement"/>
+        </rollback>
+
+        <modifySql dbms="mysql">
+            <append value="engine=InnoDB default charset=utf8 collate=utf8_unicode_ci row_format=Compressed"/>
+        </modifySql>
+    </changeSet>
+
+    <changeSet id="12" author="nicolas" context="Create artist_replacement index">
+        <createIndex schemaName="lastfm" tableName="artist_replacement" indexName="replace_artist_album_name_idx">
+            <column name="album_name"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex schemaName="lastfm" tableName="artist_replacement"
+                       indexName="replace_artist_album_name_idx"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="13" author="nicolas" context="tag tables">
+        <tagDatabase tag="tables"/>
+    </changeSet>
+
+    <changeSet id="14" author="nicolas" context="Create nb_plays function">
+        <sql>
+            create function nb_days()
+                returns integer deterministic
+                no sql
+                return @nb_days;
+
+            create function for_year()
+                returns integer deterministic
+                no sql
+                return @for_year;
+        </sql>
+        <rollback>
+            <sql>
+                drop function nb_days;
+                drop function for_year;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="15" author="nicolas" context="Create views">
+        <createView schemaName="lastfm" viewName="view_plays" replaceIfExists="true">
+            select p.id,
+                   t.track_name,
+                   a.artist_name,
+                   b.album_name,
+                   p.play_date_uts,
+                   p.play_date
+            from play p,
+                 artist a,
+                 track t
+                     left outer join album b on b.id = t.album_id
+            where p.track_id = t.id and t.artist_id = a.id
+            order by p.id desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_play_count_by_month" replaceIfExists="true">
+            select date_format(p.play_date, '%Y-%m') as month,
+                   count(p.id) as count
+            from play p
+            group by month
+            order by month;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_play_count_for_year" replaceIfExists="true">
+            select count(p.id) as count
+            from play p
+            where year(p.play_date) = for_year();
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_artists_for_last_n_days" replaceIfExists="true">
+            select a.artist_name as artist_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join track t)
+            where ((p.track_id = t.id) and (t.artist_id = a.id) and
+                   (((nb_days() is not null) and (p.play_date > (now() + interval - (nb_days()) day)))
+                       or isnull(nb_days())) and (not ((a.artist_name like 'VA %'))))
+            group by a.artist_name
+            order by count(p.id) desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_artists_for_year" replaceIfExists="true">
+            select a.artist_name as artist_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join track t)
+            where ((p.track_id = t.id) and (t.artist_id = a.id)
+                and (((year(p.play_date) = for_year()))) and (not ((a.artist_name like 'VA %'))))
+            group by a.artist_name
+            order by count(p.id) desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_albums_for_year" replaceIfExists="true">
+            select b.album_name as album_name,
+                   a.artist_name as artist_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join
+                 (track t left join album b on ((b.id = t.album_id))))
+            where ((p.track_id = t.id) and (t.artist_id = a.id)
+                       and (((year(p.play_date) = for_year()))))
+            group by b.album_name, a.artist_name
+            order by count(p.id) desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_albums_for_last_n_days" replaceIfExists="true">
+            select b.album_name as album_name,
+                   a.artist_name as artist_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join
+                 (track t left join album b on ((b.id = t.album_id))))
+            where ((p.track_id = t.id) and (t.artist_id = a.id)
+                       and (((nb_days() is not null) and (p.play_date > (now() + interval -(nb_days()) day))) or
+                    isnull(nb_days())))
+            group by b.album_name, a.artist_name
+            order by count(p.id) desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_tracks_for_year" replaceIfExists="true">
+            select t.track_name as track_name,
+                   a.artist_name as artist_name,
+                   b.album_name as album_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join
+                 (track t left join album b on ((b.id = t.album_id))))
+            where ((p.track_id = t.id) and (t.artist_id = a.id)
+                       and (((year(p.play_date) = for_year()))))
+            group by t.track_name, a.artist_name, b.album_name
+            order by count(p.id) desc;
+        </createView>
+
+        <createView schemaName="lastfm" viewName="view_top_tracks_for_last_n_days" replaceIfExists="true">
+            select t.track_name as track_name,
+                   a.artist_name as artist_name,
+                   b.album_name as album_name,
+                   count(p.id) as play_count
+            from ((play p
+                join artist a)
+                     join
+                 (track t left join album b on ((b.id = t.album_id))))
+            where ((p.track_id = t.id) and (t.artist_id = a.id)
+                       and (((nb_days() is not null) and (p.play_date > (now() + interval -(nb_days()) day))) or
+                    isnull(nb_days())))
+            group by t.track_name, a.artist_name, b.album_name
+            order by count(p.id) desc;
+        </createView>
+
+        <rollback>
+            <dropView schemaName="lastfm" viewName="view_plays"/>
+            <dropView schemaName="lastfm" viewName="view_play_count_by_month"/>
+            <dropView schemaName="lastfm" viewName="view_play_count_for_year"/>
+            <dropView schemaName="lastfm" viewName="view_top_artists_for_last_n_days"/>
+            <dropView schemaName="lastfm" viewName="view_top_artists_for_year"/>
+            <dropView schemaName="lastfm" viewName="view_top_albums_for_year"/>
+            <dropView schemaName="lastfm" viewName="view_top_albums_for_last_n_days"/>
+            <dropView schemaName="lastfm" viewName="view_top_tracks_for_year"/>
+            <dropView schemaName="lastfm" viewName="view_top_tracks_for_last_n_days"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="16" author="nicolas" context="Create insert_play procedure">
+        <createProcedure schemaName="lastfm" encoding="utf8" procedureName="insert_play">
+            create or replace
+                definer = `lastfm`@`%` procedure `insert_play`(in track_name_in varchar(512),
+                                                               in track_mbid_in varchar(36),
+                                                               in track_url_in text,
+                                                               in play_date_uts_in varchar(10),
+                                                               in artist_name_in text,
+                                                               in artist_mbid_in varchar(36),
+                                                               in album_name_in varchar(256),
+                                                               in album_mbid_in varchar(36))
+                modifies sql data
+                deterministic
+            begin
+                declare found_artist_id int;
+                declare found_album_id int;
+                declare found_track_id int;
+                declare replace_by_name varchar(512);
+
+                start transaction;
+
+                ## Various artists
+                select r.replace_by
+                from artist_replacement r
+                where r.album_name = album_name_in and
+                      ((r.artist_name is not null and r.artist_name like concat('%', artist_name_in, '%'))
+                          or r.artist_name is null)
+                into replace_by_name;
+                if (replace_by_name is not null)
+                then
+                    select replace_by_name
+                    from dual
+                    into artist_name_in;
+                end if;
+
+                ## Find artist
+                select a.id
+                from artist a
+                where a.artist_name = artist_name_in
+                into found_artist_id;
+
+                ## Create if not found
+                if (found_artist_id is null)
+                then
+                    insert into artist (artist_name, artist_mbid) values (artist_name_in, artist_mbid_in);
+                    select a.id
+                    from artist a
+                    where a.artist_name = artist_name_in
+                    into found_artist_id;
+                end if;
+
+                ## Find album
+                if (album_name_in is not null)
+                then
+                    select a.id
+                    from album a
+                    where a.album_name = album_name_in and a.artist_id = found_artist_id
+                    into found_album_id;
+
+                    ## Create if not found
+                    if (found_album_id is null)
+                    then
+                        insert into album (artist_id, album_name, album_mbid)
+                        values (found_artist_id, album_name_in, album_mbid_in);
+
+                        select a.id
+                        from album a
+                        where a.album_name = album_name_in and a.artist_id = found_artist_id
+                        into found_album_id;
+                    end if;
+                end if;
+
+                ## Find track
+                select t.id
+                from track t
+                where (t.track_name = track_name_in and t.artist_id = found_artist_id and
+                       t.album_id = found_album_id
+                    and
+                       found_album_id is not null) or
+                      (t.track_name = track_name_in and t.artist_id = found_artist_id and
+                       found_album_id is null and
+                       t.album_id is null)
+                into found_track_id;
+
+                ## Create if not found
+                if (found_track_id is null)
+                then
+                    insert into track (artist_id, album_id, track_name, track_mbid, track_url)
+                    values (found_artist_id, found_album_id, track_name_in, track_mbid_in,
+                            track_url_in);
+
+                    select t.id
+                    from track t
+                    where (t.track_name = track_name_in and t.artist_id = found_artist_id and
+                           t.album_id = found_album_id
+                        and
+                           found_album_id is not null) or
+                          (t.track_name = track_name_in and t.artist_id = found_artist_id and
+                           found_album_id is null and
+                           t.album_id is null)
+                    into found_track_id;
+                end if;
+
+                ## Create play
+                insert into play (track_id, play_date_uts, play_date)
+                values (found_track_id, play_date_uts_in, FROM_UNIXTIME(play_date_uts_in));
+                commit;
+            end;
+        </createProcedure>
+
+        <rollback>
+            <dropProcedure schemaName="lastfm" procedureName="insert_play"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="17" author="nicolas" context="Create check_track_in_db function">
+        <sqlFile path="15-changeset.sql" relativeToChangelogFile="true"
+                 endDelimiter="//"/>
+
+        <rollback>
+            <sql>
+                drop function check_track_in_db;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="18" author="nicolas" context="Grants">
+        <sql>
+            use lastfm;
+
+            grant select, insert, update, create view on `lastfm`.* to 'lastfm';
+            grant execute on procedure `lastfm`.`insert_play` to 'lastfm';
+            grant execute on function `lastfm`.`nb_days` to 'lastfm';
+            grant execute on function `lastfm`.`for_year` to 'lastfm';
+        </sql>
+
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="19" author="nicolas" context="Insert artist_replacements rows">
+        <sql>
+            insert into artist_replacement (album_name, replace_by) values ('25 Ans De Radio Nova (Boxset) - 1993', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Battlestar Galactica: Season 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Big Apple Rappin''', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Breaking Bad (Music from the Original TV Series)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brokeback Mountain (Original Motion Picture Soundtrack, Score &amp; Songs)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brownswood Bubblers', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brownswood Bubblers 2', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brownswood Bubblers 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brownswood Bubblers 5', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Brownswood Bubblers Two', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('cold waves and minimal electronics vol. 1', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('DJ-Kicks', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Emkog Sampler 2010', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('First Generation Rap - The Old School Vol. 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Forgetting Sarah Marshall', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Harlem World: The Sound Of The Big Apple Rappin''', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('hits for ever', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Hôtel Costes 5 By Stéphane Pompougnac', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Hôtel Costes 8 By Stéphane Pompougnac', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Inventaire - Best of LabelUsines', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Juno', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Lack of Afro Presents - One Way (Remixes &amp; Rarities)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Lack of Afro Presents: One Way (Remixes &amp; Rarities)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Listen To The Music: Caltone''s Jamaican 45''s 1966-69', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Little Miss Sunshine', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Live in Latin America Vol. 1', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Music For Dancefloors: The KPM Music Library', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Neu Konservativ', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('NICOLA CONTE PRESENTS VIAGEM 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Norman Jay Presents Philadelphia - The Underground Anthems of Philadelphia Soul 1973-1981', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Le Grand Mix (Boxset) - 1', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 02', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 07', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 1.3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 1.7', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 1.8', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 1.9', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 2.0', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 2.1', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 2.2', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 2.8', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Nova Tunes 3.0', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Off Track, Vol. 1: The Bronx - Compiled and Mixed By Kon &amp; Amir', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Peter Kruder - Private Collection', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Poliziotteschi Graffiti', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Psych Funk Sa-Re-Ga!', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Richard Dorfmeister - Private Collection', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Rock en stock', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Singita Miracle Beach 10th Anniversary (Compiled By Jose Padilla &amp; Glass Coffee)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Six Feet Under - Everything Ends', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Slumdog Millionaire', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Sofrito: Tropical Discotheque', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Spider-man: Rock Reflections Of A Superhero', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Stones Throw 10 Years', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Big Playback', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Boogie Volume 2', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Craft of Primitive Klezmer', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Ecstasy of Gold - 25 Killer Bullets From the Spaghetti West - Vol. 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Ecstasy of Gold - 26 Killer Bullets From the Spaghetti West - Vol. 4', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Funky 16 Corners', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The K&amp;D Sessions', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Minimal Wave Tapes: Volume One', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Minimal Wave Tapes: Volume Two', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Sound Of Siam', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('The Third Unheard: Connecticut Hip Hop 1979-1983', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Those Shocking Shaking Days - Indonesia Hard, Psychedelic, Progressive Rock and Funk (1970-1978)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Thrashin'' (The Ramp Locals Edition Soundtrack)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Tricatel RSVP (Composition instantanée et improvisation collective)', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Tropical Discotheque - Limited 12"', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Veronica Mars', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Wackies Sampler Vol. 3', 'Various Artists');
+            insert into artist_replacement (album_name, replace_by) values ('Weeds', 'Various Artists');
+        </sql>
+
+        <rollback>
+            <delete schemaName="lastfm" tableName="artist_replacement"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

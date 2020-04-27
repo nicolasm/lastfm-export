@@ -1,5 +1,5 @@
-#!/usr/bin/env python2
-#-*- coding: utf-8 -*-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 #######################################################################
 # This script imports your Last.fm listening history                  #
@@ -25,28 +25,23 @@ import sys
 import requests
 import collections
 import math
-import netrc
+import netrcfile
 import MySQLdb
 import re
 import urllib
+import json
 
-reload(sys)
-sys.setdefaultencoding('utf8')
+import lastfm
+from lastfm.lastfm import LastfmStats, recent_tracks
 
 if len(sys.argv) != 2:
-    raise netrc.NetrcParseError('Missing Last.fm username.')
+    raise netrcfile.NetrcParseError('Missing Last.fm username.')
 
 # Call the script with your Last.fm username.
 user = sys.argv[1]
 
-def retrieve_from_netrc(machine):
-    login = netrc.netrc().authenticators(machine)
-    if not login:
-        raise netrc.NetrcParseError('No authenticators for %s' % machine)
-    return login
-
 # Get the Last.fm API key
-login = retrieve_from_netrc('lastfm')
+login = netrcfile.retrieve_from_netrc('lastfm')
 api_key = login[2]
 
 # These are the API parameters for our scraping requests.
@@ -54,16 +49,6 @@ per_page = 200
 api_url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%s&limit=%s'
 track_api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=%s&format=json&artist=%s&track=%s&autocorrect=1'
 
-def recent_tracks(user, api_key, page, limit):
-    """Get the most recent tracks from `user` using `api_key`. Start at page `page` and limit results to `limit`."""
-    return requests.get(api_url % (user, api_key, page, limit)).json()
-
-def track_info(api_key, artist, track):
-    """Get track info using `api_key`."""
-    r = requests.get(track_api_url % (api_key,
-                                      urllib.quote(artist.encode('utf8')),
-                                      urllib.quote(track.rstrip().encode('utf8'))))
-    return r.json()
 
 def flatten(d, parent_key=''):
     """From http://stackoverflow.com/a/6027615/254187. Modified to strip # symbols from dict keys."""
@@ -73,80 +58,105 @@ def flatten(d, parent_key=''):
         if isinstance(v, collections.MutableMapping):
             items.extend(flatten(v, new_key).items())
         else:
-            new_key = new_key.replace('#', '')  # Strip pound symbols from column names
+            # Strip pound symbols from column names
+            new_key = new_key.replace('#', '')
             items.append((new_key, v))
     return dict(items)
+
 
 def process_track(track):
     """Removes `image` keys from track data. Replaces empty strings for values with None."""
     if 'image' in track:
         del track['image']
     flattened = flatten(track)
-    for key, val in flattened.iteritems():
+    for key, val in flattened.items():
         if val == '':
             flattened[key] = None
     return flattened
 
-def retrieve_total_plays_from_db():
-    """Get total plays from the database."""
-    mysql.query('select count(*) from play')
-    result = mysql.use_result()
-    total_tracks_db = result.fetch_row()[0][0]
-    return total_tracks_db
 
 def check_track_in_db(track_name, artist_name, album_name):
     cursor = mysql.cursor()
-    cursor.execute("select check_track_in_db(%s, %s, %s)", (track_name, artist_name, album_name))
+    cursor.execute("select check_track_in_db(%s, %s, %s)",
+                   (track_name, artist_name, album_name))
     return cursor.fetchone()[0]
 
+
 # We need to get the first page so we can find out how many total pages there are in our listening history.
-resp = recent_tracks(user, api_key, 1, 200)
+""" resp = lastfm.recent_tracks(user, api_key, 1, 200)
 total_pages = int(resp['recenttracks']['@attr']['totalPages'])
-total_plays_in_lastfm = int(resp['recenttracks']['@attr']['total'])
+total_plays_in_lastfm = int(resp['recenttracks']['@attr']['total']) """
 
 # Get the MySQL connection data.
-login = retrieve_from_netrc('lastfm.mysql')
+login = netrcfile.retrieve_from_netrc('lastfm.mysql')
 
-mysql = MySQLdb.connect(user=login[0],passwd=login[2],db=login[1], charset='utf8')
+mysql = MySQLdb.connect(
+    user=login[0], passwd=login[2], db=login[1], charset='utf8')
 mysql_cursor = mysql.cursor()
 
-total_plays_in_db = retrieve_total_plays_from_db()
+lastfm_stats = LastfmStats.get_lastfm_stats(mysql, user, api_key)
+total_pages = lastfm_stats.nb_delta_pages()
+total_plays_in_db = lastfm_stats.nb_plays_in_db
 
-# Compute the number of pages to get to be up-to-date.
-total_pages = int(math.ceil((float(total_plays_in_lastfm) - float(total_plays_in_db)) / per_page));
+print('Nb page to get: ', total_pages)
 
 if total_pages == 0:
     print('Nothing to update!')
     sys.exit(1)
 
 all_pages = []
-for page_num in xrange(total_pages, 0, -1):
+
+for page_num in range(total_pages, 0, -1):
     print('Page', page_num, 'of', total_pages)
-    page = recent_tracks(user, api_key, page_num, 200)
+    page = recent_tracks(user, api_key, page_num)
+
+    while page.get('recenttracks') is None:
+        print('has no tracks. Retrying!')
+        page = recent_tracks(user, api_key, page_num)
+
     all_pages.append(page)
 
 # Iterate through all pages
 num_pages = len(all_pages)
 for page_num, page in enumerate(all_pages):
     print('Page', page_num + 1, 'of', num_pages)
- 
+
     tracks = page['recenttracks']['track']
-    
-    ## Remove the "nowplaying" track if found.
+
+    # Remove the "nowplaying" track if found.
     if tracks[0].get('@attr'):
         if tracks[0]['@attr']['nowplaying'] == 'true':
             tracks.pop(0)
 
-    ## Get only the missing tracks.
+    # Get only the missing tracks.
     if page_num == 0:
-        tracks = tracks[0: (total_plays_in_lastfm - total_plays_in_db) % per_page]
+        print('Fist page')
+        print(lastfm_stats.nb_plays_in_lastfm)
+        print(lastfm_stats.nb_plays_in_db)
+        nb_plays = lastfm_stats.nb_plays_for_first_page()
+        tracks = tracks[0: nb_plays]
+        print('Getting ', nb_plays)
 
     # On each page, iterate through all tracks
     num_tracks = len(tracks)
+
+    json_tracks = []
     for track_num, track in enumerate(reversed(tracks)):
         print('Track', track_num + 1, 'of', num_tracks)
+        json_tracks.append(json.dumps(track))
 
-        # Process each track and insert it into the `tracks` table
+    try:
+        query = 'insert into lastfm.json_track(json) values (%s)'
+        mysql_cursor.executemany(query, json_tracks)
+        mysql.commit()
+    except mysql.Error as e:
+            print(e)
+            mysql.rollback()
+            sys.exit(1)
+
+    """ for track_num, track in enumerate(reversed(tracks)):
+        print('Track', track_num + 1, 'of', num_tracks)
+
         transformed_track = process_track(track)
 
         artist_name = transformed_track['artist_text']
@@ -154,19 +164,21 @@ for page_num, page in enumerate(all_pages):
         track_name = transformed_track['name']
 
         if not check_track_in_db(track_name, artist_name, album_name):
-            info = track_info(api_key, artist_name, track_name)
+            info = lastfm.track_info(api_key, artist_name, track_name)
             info = process_track(info)
 
         # Cut artist name if too long.
         if len(artist_name) > 512:
             artist_name = artist_name[:512]
-        
+
         # Cut track name if too long.
         if len(track_name) > 512:
             track_name = track_name[:512]
 
         # Call procedure to insert current play and track, artist, album if needed.
         try:
+            mysql_cursor.execute('insert into json_track(json) values (%s)', [
+                                 json.dumps(track)])
             mysql_cursor.callproc("insert_play",
                         (track_name,
                          transformed_track['mbid'],
@@ -176,10 +188,13 @@ for page_num, page in enumerate(all_pages):
                          transformed_track['artist_mbid'],
                          album_name,
                          transformed_track['album_mbid']))
-        except:
+            mysql.commit()
+        except mysql.connector.Error as e:
+            print(e)
             print(track_name, ', ', artist_name)
             print(info)
-	    sys.exit(1)
+            mysql.rollback()
+            sys.exit(1) """
 
 # Display number of plays in database.
-print('Done!', retrieve_total_plays_from_db(), 'rows in table `play.')
+print('Done!', lastfm.retrieve_total_plays_from_db(mysql), 'rows in table `play.')
