@@ -1,8 +1,8 @@
 import collections
 import math
-import MySQLdb
-import requests
 import urllib
+
+import requests
 
 api_url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%s&limit=%s'
 track_api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=%s&format=json&artist=%s&track=%s&autocorrect=1'
@@ -11,22 +11,24 @@ track_api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=
 class LastfmStats(object):
     plays_per_page = 200
 
-    def __init__(self, nb_pages_in_lastfm, nb_plays_in_lastfm, nb_plays_in_db):
+    def __init__(self, nb_pages_in_lastfm, nb_plays_in_lastfm,
+                 nb_json_tracks_in_db):
         super(LastfmStats, self).__init__()
         self.nb_pages_in_lastfm = nb_pages_in_lastfm
         self.nb_plays_in_lastfm = nb_plays_in_lastfm
-        self.nb_plays_in_db = nb_plays_in_db
+        self.nb_json_tracks_in_db = nb_json_tracks_in_db
 
     def nb_delta_pages(self):
         # Compute the number of pages to get to be up-to-date.
         return int(
             math.ceil(
-                (float(self.nb_plays_in_lastfm) - float(self.nb_plays_in_db))
+                (float(self.nb_plays_in_lastfm) - float(
+                    self.nb_json_tracks_in_db))
                 / LastfmStats.plays_per_page))
 
     def nb_plays_for_first_page(self):
-        return (self.nb_plays_in_lastfm - self.nb_plays_in_db)\
-            % LastfmStats.plays_per_page
+        return (self.nb_plays_in_lastfm - self.nb_json_tracks_in_db) \
+               % LastfmStats.plays_per_page
 
     @staticmethod
     def get_lastfm_stats(mysql, user, api_key):
@@ -35,21 +37,30 @@ class LastfmStats(object):
         total_pages = int(resp['recenttracks']['@attr']['totalPages'])
         total_plays_in_lastfm = int(resp['recenttracks']['@attr']['total'])
 
-        total_plays_in_db = retrieve_total_plays_from_db(mysql)
+        total_plays_in_db = retrieve_total_json_tracks_from_db(mysql)
 
-        return LastfmStats(total_pages, total_plays_in_lastfm, total_plays_in_db)
+        return LastfmStats(total_pages, total_plays_in_lastfm,
+                           total_plays_in_db)
+
+
+def retrieve_total_json_tracks_from_db(mysql):
+    """Get total json_tracks from the database."""
+    mysql.query('select count(*) from json_track')
+    result = mysql.use_result()
+    return result.fetch_row()[0][0]
 
 
 def retrieve_total_plays_from_db(mysql):
     """Get total plays from the database."""
-    mysql.query('select count(*) from json_track')
+    mysql.query('select count(*) from play')
     result = mysql.use_result()
     return result.fetch_row()[0][0]
 
 
 def recent_tracks(user, api_key, page):
     """Get the most recent tracks from `user` using `api_key`. Start at page `page` and limit results to `limit`."""
-    return requests.get(api_url % (user, api_key, page, LastfmStats.plays_per_page)).json()
+    return requests.get(
+        api_url % (user, api_key, page, LastfmStats.plays_per_page)).json()
 
 
 def track_info(api_key, artist, track):
@@ -57,7 +68,8 @@ def track_info(api_key, artist, track):
     r = requests.get(track_api_url % (api_key,
                                       urllib.parse.quote(
                                           artist.encode('utf8')),
-                                      urllib.parse.quote(track.rstrip().encode('utf8'))))
+                                      urllib.parse.quote(
+                                          track.rstrip().encode('utf8'))))
     return r.json()
 
 
