@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+from enum import Enum
 
 import pandas
 
@@ -56,13 +57,69 @@ query_total_count = 'select v.* from (select @nb_days:=%s p) parm, view_play_cou
 query_total_count_for_year = 'select v.* from (select @for_year:=%s p) parm, view_play_count_for_year v'
 
 
+class DataFrameColumn(Enum):
+    Artist = 1
+    Album = 2
+    ArtistAlbum = 3
+    Track = 4
+    ArtistAlbumTrack = 5
+
+    @staticmethod
+    def from_value(str):
+        for e in DataFrameColumn:
+            if e.name == str:
+                return e
+
+
+class Top(Enum):
+    ARTIST = 1
+    ALBUM = 2
+    TRACK = 3
+
+
+class OverType(Enum):
+    DURATION = 1
+    YEAR = 2
+
+
+class AggregationType(Enum):
+    DURATION_ARTIST = (Top.ARTIST, OverType.DURATION, 'retrieve_top_artists_as_dataframe')
+    DURATION_ALBUM = (Top.ALBUM, OverType.DURATION, 'retrieve_top_albums_as_dataframe')
+    DURATION_TRACK = (Top.TRACK, OverType.DURATION, 'retrieve_top_tracks_as_dataframe')
+    YEAR_ARTIST = (Top.ARTIST, OverType.YEAR, 'retrieve_top_artists_for_year_as_dataframe')
+    YEAR_ALBUM = (Top.ALBUM, OverType.YEAR, 'retrieve_top_albums_for_year_as_dataframe')
+    YEAR_TRACK = (Top.TRACK, OverType.YEAR, 'retrieve_top_tracks_for_year_as_dataframe')
+
+    def __init__(self, top, over_type, method):
+        self.top = top
+        self.over_type = over_type
+        self.method = method
+
+    def retrieve(self, cursor, agg_value, limit, remove_remaining=True):
+        df = eval(self.method)(cursor, agg_value, limit)
+        if remove_remaining:
+            df = df[df[self.top.name.title()] != 'Remaining %ss' % self.get_top()]
+        return df
+
+    def get_top(self):
+        return self.top.name.lower()
+
+    def get_over_type(self):
+        return self.over_type.name.lower()
+
+    @staticmethod
+    def from_value(str):
+        for e in AggregationType:
+            if e.name == str:
+                return e
+
+
 def retrieve_play_count_by_month_as_dataframe(cursor, year):
-    cursor.execute('select * from view_play_count_by_month v where substr(v.month, 1, 4) = %s' % year)
+    cursor.execute('select * from view_play_count_by_month v where substr(v.yr_month, 1, 4) = %s' % year)
     rows = cursor.fetchall()
-    df = pandas.DataFrame([[ij for ij in i] for i in rows])
-    df.rename(columns={0: 'Month', 1: 'PlayCount'}, inplace=True)
-    df['Month'] = pandas.to_datetime(df['Month'], format='%Y-%m')
-    df = df.sort_values(by='Month')
+    df = pandas.DataFrame(rows, columns=['YearMonth', 'Month', 'PlayCount'], dtype='int64')
+    df['YearMonth'] = pandas.to_datetime(df['YearMonth'], format='%Y-%m')
+    df = df.sort_values(by='YearMonth')
     return df
 
 
@@ -103,7 +160,7 @@ def retrieve_total_play_count_for_year(cursor, for_year):
 
 def retrieve_top_artists_as_dataframe(cursor, nb_days, limit):
     cursor.execute(
-        queries_top_for_function['Artist'].format(function_name='for_nb_days',
+        queries_top_for_function['Artist'].format(function_name='for_duration',
                                                   entity='artist',
                                                   function_value=nb_days,
                                                   limit=limit))
@@ -128,7 +185,7 @@ def create_artists_dataframe(cursor):
 
 def retrieve_top_albums_as_dataframe(cursor, nb_days, limit):
     cursor.execute(
-        queries_top_for_function['Album'].format(function_name='for_nb_days',
+        queries_top_for_function['Album'].format(function_name='for_duration',
                                                  entity='album',
                                                  function_value=nb_days,
                                                  limit=limit))
@@ -155,7 +212,7 @@ def create_albums_dataframe(cursor):
 
 def retrieve_top_tracks_as_dataframe(cursor, nb_days, limit):
     cursor.execute(
-        queries_top_for_function['Track'].format(function_name='for_nb_days',
+        queries_top_for_function['Track'].format(function_name='for_duration',
                                                  entity='track',
                                                  function_value=nb_days,
                                                  limit=limit))
