@@ -7,13 +7,15 @@ from pathlib import Path
 import MySQLdb
 import matplotlib.pyplot as plt
 
-import netrcfile
+from lastfmConf.lastfmConf import get_lastfm_conf
 from lastfmPandas.lastfmPandas import retrieve_play_count_by_month_as_dataframe
 
-login = netrcfile.retrieve_from_netrc('lastfm.mysql')
+conf = get_lastfm_conf()
 
 mysql = MySQLdb.connect(
-    user=login[0], passwd=login[2], db=login[1], charset='utf8')
+    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
+    db=conf['lastfm']['db']['db_name'], charset='utf8')
+
 mysql_cursor = mysql.cursor()
 
 

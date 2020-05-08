@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -7,17 +8,16 @@ import MySQLdb
 import matplotlib.pyplot as plt
 from PIL import Image
 
-import netrcfile
+from lastfmConf.lastfmConf import get_lastfm_conf
 from lastfmPandas.lastfmPandas import DataFrameColumn, \
     AggregationType, OverType
 from lastfmPlot.lastfmPlot import PlotType, Duration, Year
 
-import argparse
-
-login = netrcfile.retrieve_from_netrc('lastfm.mysql')
+conf = get_lastfm_conf()
 
 mysql = MySQLdb.connect(
-    user=login[0], passwd=login[2], db=login[1], charset='utf8')
+    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
+    db=conf['lastfm']['db']['db_name'], charset='utf8')
 mysql_cursor = mysql.cursor()
 
 
@@ -29,10 +29,17 @@ def parse_args():
     time_periods = [e.name for e in Duration]
     time_periods.extend(str(y) for y in years)
 
-    parser.add_argument('timePeriod', choices=time_periods)
-    parser.add_argument('aggregationType', choices=[a.name for a in AggregationType])
-    parser.add_argument('plotType', choices=[p.name for p in PlotType])
-    parser.add_argument('dataFrameColumn', choices=[c.name for c in DataFrameColumn])
+    parser.add_argument('-t', '--timePeriod', nargs='?', choices=time_periods,
+                        default=str(now.year))
+    parser.add_argument('-a', '--aggregationType', nargs='?',
+                        choices=[a.name for a in AggregationType],
+                        default=AggregationType.YEAR_ALBUM.name)
+    parser.add_argument('-p', '--plotType', nargs='?',
+                        choices=[p.name for p in PlotType],
+                        default=PlotType.PIE.name)
+    parser.add_argument('-c', '--dataFrameColumn', nargs='?',
+                        choices=[c.name for c in DataFrameColumn],
+                        default=DataFrameColumn.ArtistAlbum.name)
 
     return parser.parse_args()
 
@@ -54,13 +61,6 @@ def plot(time_period, agg_type, plot_type, data_frame_column):
     buffer.close()
 
 
-args = parse_args()
-
-agg_type = AggregationType.from_value(args.aggregationType)
-plot_type = PlotType.from_value(args.plotType)
-data_frame_column = DataFrameColumn.from_value(args.dataFrameColumn)
-
-
 def get_time_period(args):
     time_period = None
     if agg_type.over_type == OverType.DURATION:
@@ -69,5 +69,10 @@ def get_time_period(args):
         time_period = Year(args.timePeriod)
     return time_period
 
+args = parse_args()
+
+agg_type = AggregationType.from_value(args.aggregationType)
+plot_type = PlotType.from_value(args.plotType)
+data_frame_column = DataFrameColumn.from_value(args.dataFrameColumn)
 
 plot(get_time_period(args), agg_type, plot_type, data_frame_column)

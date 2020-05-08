@@ -23,29 +23,21 @@
 
 import json
 import sys
-from netrc import NetrcParseError
 
 import MySQLdb
 
-import netrcfile
 from lastfm.lastfm import LastfmStats, recent_tracks, \
     retrieve_total_json_tracks_from_db
+from lastfmConf.lastfmConf import get_lastfm_conf
 
-if len(sys.argv) != 2:
-    raise NetrcParseError('Missing Last.fm username.')
+conf = get_lastfm_conf()
 
-# Call the script with your Last.fm username.
-user = sys.argv[1]
-
-# Get the Last.fm API key
-login = netrcfile.retrieve_from_netrc('lastfm')
-api_key = login[2]
-
-# Get the MySQL connection data.
-login = netrcfile.retrieve_from_netrc('lastfm.mysql')
+user = conf['lastfm']['service']['username']
+api_key = conf['lastfm']['service']['api_key']
 
 mysql = MySQLdb.connect(
-    user=login[0], passwd=login[2], db=login[1], charset='utf8')
+    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
+    db=conf['lastfm']['db']['db_name'], charset='utf8')
 mysql_cursor = mysql.cursor()
 
 lastfm_stats = LastfmStats.get_lastfm_stats(mysql, user, api_key)

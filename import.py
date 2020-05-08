@@ -6,18 +6,16 @@ import sys
 
 import MySQLdb
 
-import netrcfile
 from lastfm.lastfm import process_track, retrieve_total_plays_from_db, \
     retrieve_total_json_tracks_from_db
+from lastfmConf.lastfmConf import get_lastfm_conf
 
-login = netrcfile.retrieve_from_netrc('lastfm.mysql')
+conf = get_lastfm_conf()
 
 mysql = MySQLdb.connect(
-    user=login[0], passwd=login[2], db=login[1], charset='utf8')
+    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
+    db=conf['lastfm']['db']['db_name'], charset='utf8')
 mysql_cursor = mysql.cursor()
-
-login = netrcfile.retrieve_from_netrc('lastfm')
-api_key = login[2]
 
 nb_json_tracks_in_db = retrieve_total_json_tracks_from_db(mysql)
 nb_plays_in_db = retrieve_total_plays_from_db(mysql)
@@ -29,11 +27,15 @@ select id, json from
 order by id
 """
 
+if nb_plays_to_insert == 0:
+    print('Nothing new!')
+    sys.exit(0)
+
 mysql_cursor.execute(query % nb_plays_to_insert)
 
 parameters = []
-for (id, json_track) in mysql_cursor:
-    print('Track', id)
+for (track_id, json_track) in mysql_cursor:
+    print('Track', track_id)
     track = json.loads(json_track)
 
     transformed_track = process_track(track)

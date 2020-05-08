@@ -1,0 +1,8 @@
+lastfm:
+    service:
+        username: usernmae
+        api_key: apikey
+    db:
+        db_name: lastfm
+        user: lastfm
+        password: password
