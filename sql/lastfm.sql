@@ -380,3 +380,7 @@ grant select, insert, update, create view on `lastfm`.* to 'lastfm';
 grant execute on procedure `lastfm`.`insert_play` to 'lastfm';
 grant execute on function `lastfm`.`nb_days` to 'lastfm';
 grant execute on function `lastfm`.`for_year` to 'lastfm';
+
+
+grant all privileges on lastfm.* to lastfm@'%' with grant option;
+flush privileges;

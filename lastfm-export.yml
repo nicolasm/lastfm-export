@@ -6,3 +6,9 @@ lastfm:
         db_name: lastfm
         user: lastfm
         password: password
+plot:
+    saveEnabled: True
+    sendViaTelegram: True
+telegram:
+    token: token
+    chatId: chatid

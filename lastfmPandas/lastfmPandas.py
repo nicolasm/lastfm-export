@@ -4,57 +4,11 @@ from enum import Enum
 
 import pandas
 
-query_top = """
-with top as (
-    select v.*
-    from (select @{function_name} := {function_value} p) parm, view_top_{entity}s_{function_name} v
-    limit {limit}
-),
-total_count as (
-    select v.play_count
-    from view_play_count v
-)
-
-select t.*
-from top t
-"""
-
-queries_top_for_function = {}
-queries_top_for_function['Artist'] = query_top + \
-                                     """
-                                     union all
-                                     select 'Remaining {entity}s' as {entity}_name,
-                                     ((select tc.play_count from total_count tc)
-                                     -
-                                     (select sum(play_count) from top)) as play_count
-
-                                     """
-
-queries_top_for_function['Album'] = query_top + \
-                                    """
-                                    union all
-                                    select 'Remaining {entity}s' as {entity}_name,
-                                    '...' as album_name,
-                                    ((select tc.play_count from total_count tc)
-                                    -
-                                    (select sum(play_count) from top)) as play_count
-
-                                    """
-
-queries_top_for_function['Track'] = query_top + \
-                                    """
-                                    union all
-                                    select 'Remaining {entity}s' as {entity}_name,
-                                    '...' as artist_name,
-                                    '...' as album_name,
-                                    ((select tc.play_count from total_count tc)
-                                    -
-                                    (select sum(play_count) from top)) as play_count
-
-                                    """
-
-query_total_count = 'select v.* from (select @nb_days:=%s p) parm, view_play_count v'
-query_total_count_for_year = 'select v.* from (select @for_year:=%s p) parm, view_play_count_for_year v'
+from lastfmSql.lastfmSql import build_query_top_artists_for_duration, \
+    build_query_top_artists_for_year, build_query_top_albums_for_duration, \
+    build_query_top_albums_for_year, build_query_top_tracks_for_duration, \
+    build_query_top_tracks_for_year, build_query_play_count_for_duration, \
+    build_query_play_count_for_year
 
 
 class DataFrameColumn(Enum):
@@ -149,30 +103,22 @@ def retrieve_recent_plays_as_dataframe(cursor):
 
 
 def retrieve_total_play_count(cursor, nb_days):
-    cursor.execute(query_total_count % nb_days)
+    cursor.execute(build_query_play_count_for_duration(nb_days))
     return cursor.fetchone()[0]
 
 
 def retrieve_total_play_count_for_year(cursor, for_year):
-    cursor.execute(query_total_count % for_year)
+    cursor.execute(build_query_play_count_for_year(for_year))
     return cursor.fetchone()[0]
 
 
 def retrieve_top_artists_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(
-        queries_top_for_function['Artist'].format(function_name='for_duration',
-                                                  entity='artist',
-                                                  function_value=nb_days,
-                                                  limit=limit))
+    cursor.execute(build_query_top_artists_for_duration(nb_days, limit))
     return create_artists_dataframe(cursor)
 
 
 def retrieve_top_artists_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(
-        queries_top_for_function['Artist'].format(function_name='for_year',
-                                                  entity='artist',
-                                                  function_value=for_year,
-                                                  limit=limit))
+    cursor.execute(build_query_top_artists_for_year(for_year, limit))
     return create_artists_dataframe(cursor)
 
 
@@ -184,20 +130,12 @@ def create_artists_dataframe(cursor):
 
 
 def retrieve_top_albums_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(
-        queries_top_for_function['Album'].format(function_name='for_duration',
-                                                 entity='album',
-                                                 function_value=nb_days,
-                                                 limit=limit))
+    cursor.execute(build_query_top_albums_for_duration(nb_days, limit))
     return create_albums_dataframe(cursor)
 
 
 def retrieve_top_albums_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(
-        queries_top_for_function['Album'].format(function_name='for_year',
-                                                 entity='album',
-                                                 function_value=for_year,
-                                                 limit=limit))
+    cursor.execute(build_query_top_albums_for_year(for_year, limit))
     return create_albums_dataframe(cursor)
 
 
@@ -211,20 +149,12 @@ def create_albums_dataframe(cursor):
 
 
 def retrieve_top_tracks_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(
-        queries_top_for_function['Track'].format(function_name='for_duration',
-                                                 entity='track',
-                                                 function_value=nb_days,
-                                                 limit=limit))
+    cursor.execute(build_query_top_tracks_for_duration(nb_days, limit))
     return create_tracks_dataframe(cursor)
 
 
 def retrieve_top_tracks_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(
-        queries_top_for_function['Track'].format(function_name='for_year',
-                                                 entity='track',
-                                                 function_value=for_year,
-                                                 limit=limit))
+    cursor.execute(build_query_top_tracks_for_year(for_year, limit))
     return create_tracks_dataframe(cursor)
 
 

@@ -24,24 +24,21 @@ class TimePeriod:
 
 
 class Duration(TimePeriod, Enum):
-    WEEK = '7'
-    MONTH = '30'
-    QUARTER = '90'
-    SEMESTER = '180'
-    YEAR = '365'
+    WEEK = 7
+    MONTH = 30
+    QUARTER = 90
+    SEMESTER = 180
+    YEAR = 365
     OVERALL = None
 
     def get_value(self):
-        if self.value is None:
-            return "null"
-        else:
-            return self.value
+        return self.value
 
     def get_label(self):
         if self.value is None:
             return self.name
         else:
-            return self.value
+            return 'last-%s-days' % self.value
 
     @staticmethod
     def from_value(str):
@@ -70,9 +67,9 @@ class PlotType(Enum):
 
     def plot(self, df, column):
         eval(self.method)(df, column.name)
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png', dpi=150)
-        return buffer
+        bio = io.BytesIO()
+        plt.savefig(bio, format='png', dpi=300)
+        return bio
 
     def get_name(self):
         return self.name.lower()

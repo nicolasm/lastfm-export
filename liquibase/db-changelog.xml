@@ -111,27 +111,7 @@
         <tagDatabase tag="tables"/>
     </changeSet>
 
-    <changeSet id="8" author="nicolas" context="Create nb_plays function">
-        <sql>
-            create function for_duration()
-                returns integer deterministic
-                no sql
-                return @for_duration;
-
-            create function for_year()
-                returns integer deterministic
-                no sql
-                return @for_year;
-        </sql>
-        <rollback>
-            <sql>
-                drop function for_duration;
-                drop function for_year;
-            </sql>
-        </rollback>
-    </changeSet>
-
-    <changeSet id="9" author="nicolas" context="Create views">
+    <changeSet id="8" author="nicolas" context="Create views">
         <createView schemaName="lastfm" viewName="view_plays" replaceIfExists="true">
             select p.id,
                    p.track_name,
@@ -143,14 +123,6 @@
             order by p.id desc;
         </createView>
 
-        <createView schemaName="lastfm" viewName="view_play_count" replaceIfExists="true">
-            select count(p.id) as play_count
-            from play p
-            where
-                (((for_duration() is not null) and (p.play_date > (now() + interval -(for_duration()) day)))
-                     or isnull(for_duration()));
-        </createView>
-
         <createView schemaName="lastfm" viewName="view_play_count_by_month" replaceIfExists="true">
             select date_format(p.play_date, '%Y-%m') as yr_month,
                    date_format(p.play_date, '%b') as month,
@@ -160,96 +132,17 @@
             order by yr_month;
         </createView>
 
-        <createView schemaName="lastfm" viewName="view_play_count_for_year" replaceIfExists="true">
-            select count(p.id) as count
-            from play p
-            where year(p.play_date) = for_year();
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_artists_for_duration" replaceIfExists="true">
-            select p.artist_name,
-                   count(p.id) as play_count
-            from play p
-            where (((for_duration() is not null) and (p.play_date > (now() + interval - (for_duration()) day)))
-                       or isnull(for_duration())) and (not ((p.artist_name like 'VA %')))
-            group by p.artist_name
-            order by count(p.id) desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_artists_for_year" replaceIfExists="true">
-            select p.artist_name,
-                   count(p.id) as play_count
-            from play p
-            where (((year(p.play_date) = for_year()))) and (not ((p.artist_name like 'VA %')))
-            group by p.artist_name
-            order by count(p.id) desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_albums_for_year" replaceIfExists="true">
-            select p.album_name,
-                   p.artist_name,
-                   count(p.id) as play_count
-            from play p
-            where (((year(p.play_date) = for_year())))
-            group by p.album_name, p.artist_name
-            order by count(p.id) desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_albums_for_duration" replaceIfExists="true">
-            select p.album_name,
-                   p.artist_name,
-                   count(p.id) as play_count
-            from play p
-            where (((for_duration() is not null) and (p.play_date > (now() + interval -(for_duration()) day))) or
-                    isnull(for_duration()))
-            group by p.album_name, p.artist_name
-            order by count(p.id) desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_tracks_for_year" replaceIfExists="true">
-            select p.track_name,
-                   p.artist_name,
-                   p.album_name,
-                   count(p.id) as play_count
-            from play p
-            where (((year(p.play_date) = for_year())))
-            group by p.track_name, p.artist_name, p.album_name
-            order by count(p.id) desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_top_tracks_for_duration" replaceIfExists="true">
-            select p.track_name,
-                   p.artist_name,
-                   p.album_name,
-                   count(p.id) as play_count
-            from play p
-            where (((for_duration() is not null) and (p.play_date > (now() + interval -(for_duration()) day))) or
-                    isnull(for_duration()))
-            group by p.track_name, p.artist_name, p.album_name
-            order by count(p.id) desc;
-        </createView>
-
         <rollback>
             <dropView schemaName="lastfm" viewName="view_plays"/>
-            <dropView schemaName="lastfm" viewName="view_play_count"/>
             <dropView schemaName="lastfm" viewName="view_play_count_by_month"/>
-            <dropView schemaName="lastfm" viewName="view_play_count_for_year"/>
-            <dropView schemaName="lastfm" viewName="view_top_artists_for_duration"/>
-            <dropView schemaName="lastfm" viewName="view_top_artists_for_year"/>
-            <dropView schemaName="lastfm" viewName="view_top_albums_for_year"/>
-            <dropView schemaName="lastfm" viewName="view_top_albums_for_duration"/>
-            <dropView schemaName="lastfm" viewName="view_top_tracks_for_year"/>
-            <dropView schemaName="lastfm" viewName="view_top_tracks_for_duration"/>
         </rollback>
     </changeSet>
 
-    <changeSet id="10" author="nicolas" context="Grants">
+    <changeSet id="9" author="nicolas" context="Grants">
         <sql>
             use lastfm;
 
-            grant select, insert, update, create view on * to lastfm;
-            grant execute on function for_duration to lastfm;
-            grant execute on function for_year to lastfm;
+            grant select, insert, update, create view on lastfm.* to lastfm@`%`;
         </sql>
 
         <rollback/>

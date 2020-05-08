@@ -77,8 +77,6 @@ for page_num, page in enumerate(all_pages):
     # Get only the missing tracks.
     if page_num == 0:
         print('Fist page')
-        print(lastfm_stats.nb_plays_in_lastfm)
-        print(lastfm_stats.nb_json_tracks_in_db)
         nb_plays = lastfm_stats.nb_plays_for_first_page()
         tracks = tracks[0: nb_plays]
         print('Getting ', nb_plays)

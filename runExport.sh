@@ -1,6 +1,6 @@
 #!/bin/bash -
 cd ~/Code/GitHub/lastfm-export/
-./exportLastfm2Mysql.py $1
+./venv/bin/python export.py
 if [[ $? = 0 ]]; then
-    ../lastfm-notebooks/runPlays.sh
+    ./venv/bin/python import.py
 fi
