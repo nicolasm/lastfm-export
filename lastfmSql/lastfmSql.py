@@ -1,3 +1,5 @@
+from lastfmPlot.lastfmPlot import Duration
+
 query_top_with_remaining = """
     with top as (
         {query_top}
@@ -167,13 +169,11 @@ def build_query_top_tracks_for_year(year, limit):
 
 def build_duration_condition(duration):
     condition = ''
-    if duration:
+    if duration != Duration.OVERALL.get_value():
         condition = 'and p.play_date > now() + interval - %s day' % duration
     return condition
 
 
 def build_year_condition(year):
-    condition = ''
-    if year:
-        condition = 'and year(p.play_date) = %s' % year
+    condition = 'and year(p.play_date) = %s' % year
     return condition

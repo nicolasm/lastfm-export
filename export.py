@@ -33,11 +33,11 @@ from lastfmConf.lastfmConf import get_lastfm_conf
 conf = get_lastfm_conf()
 
 user = conf['lastfm']['service']['username']
-api_key = conf['lastfm']['service']['api_key']
+api_key = conf['lastfm']['service']['apiKey']
 
 mysql = MySQLdb.connect(
     user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['db_name'], charset='utf8')
+    db=conf['lastfm']['db']['dbName'], charset='utf8')
 mysql_cursor = mysql.cursor()
 
 lastfm_stats = LastfmStats.get_lastfm_stats(mysql, user, api_key)

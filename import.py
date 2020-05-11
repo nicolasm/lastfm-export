@@ -14,7 +14,7 @@ conf = get_lastfm_conf()
 
 mysql = MySQLdb.connect(
     user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['db_name'], charset='utf8')
+    db=conf['lastfm']['db']['dbName'], charset='utf8')
 mysql_cursor = mysql.cursor()
 
 nb_json_tracks_in_db = retrieve_total_json_tracks_from_db(mysql)

@@ -1,9 +1,10 @@
 lastfm:
     service:
         username: usernmae
-        api_key: apikey
+        apiKey: apikey
+        startYear: 2006
     db:
-        db_name: lastfm
+        dbName: lastfm
         user: lastfm
         password: password
 plot:

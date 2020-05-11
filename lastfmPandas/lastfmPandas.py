@@ -19,30 +19,39 @@ class DataFrameColumn(Enum):
     ArtistAlbumTrack = 5
 
     @staticmethod
-    def from_value(str):
+    def from_value(str_value):
         for e in DataFrameColumn:
-            if e.name == str:
+            if e.name == str_value:
                 return e
 
 
 class Top(Enum):
-    ARTIST = 1
-    ALBUM = 2
-    TRACK = 3
+    Artist = [DataFrameColumn.Artist]
+    Album = [DataFrameColumn.Album, DataFrameColumn.ArtistAlbum]
+    Track = [DataFrameColumn.Track, DataFrameColumn.ArtistAlbumTrack]
+
+    def __init__(self, columns):
+        self.columns = columns
+
+    @staticmethod
+    def from_value(str_value):
+        for e in Top:
+            if e.name == str_value:
+                return e
 
 
 class OverType(Enum):
-    DURATION = 1
-    YEAR = 2
+    Duration = 1
+    Year = 2
 
 
 class AggregationType(Enum):
-    DURATION_ARTIST = (Top.ARTIST, OverType.DURATION, 'retrieve_top_artists_as_dataframe')
-    DURATION_ALBUM = (Top.ALBUM, OverType.DURATION, 'retrieve_top_albums_as_dataframe')
-    DURATION_TRACK = (Top.TRACK, OverType.DURATION, 'retrieve_top_tracks_as_dataframe')
-    YEAR_ARTIST = (Top.ARTIST, OverType.YEAR, 'retrieve_top_artists_for_year_as_dataframe')
-    YEAR_ALBUM = (Top.ALBUM, OverType.YEAR, 'retrieve_top_albums_for_year_as_dataframe')
-    YEAR_TRACK = (Top.TRACK, OverType.YEAR, 'retrieve_top_tracks_for_year_as_dataframe')
+    DurationArtist = (Top.Artist, OverType.Duration, 'retrieve_top_artists_as_dataframe')
+    DurationAlbum = (Top.Album, OverType.Duration, 'retrieve_top_albums_as_dataframe')
+    DurationTrack = (Top.Track, OverType.Duration, 'retrieve_top_tracks_as_dataframe')
+    YearArtist = (Top.Artist, OverType.Year, 'retrieve_top_artists_for_year_as_dataframe')
+    YearAlbum = (Top.Album, OverType.Year, 'retrieve_top_albums_for_year_as_dataframe')
+    YearTrack = (Top.Track, OverType.Year, 'retrieve_top_tracks_for_year_as_dataframe')
 
     def __init__(self, top, over_type, method):
         self.top = top

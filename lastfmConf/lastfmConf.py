@@ -1,6 +1,9 @@
 import yaml
+import os
 
-with open('lastfm-export.yml', 'r') as stream:
+XDG_CONFIG_HOME = os.environ['XDG_CONFIG_HOME']
+
+with open('%s/lastfm-export/lastfm-export.yml' % XDG_CONFIG_HOME, 'r') as stream:
     conf = yaml.safe_load(stream)
 
 

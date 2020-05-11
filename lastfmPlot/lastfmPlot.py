@@ -24,26 +24,27 @@ class TimePeriod:
 
 
 class Duration(TimePeriod, Enum):
-    WEEK = 7
-    MONTH = 30
-    QUARTER = 90
-    SEMESTER = 180
-    YEAR = 365
-    OVERALL = None
+    WEEK = ('7', False)
+    MONTH = ('30', False)
+    QUARTER = ('90', False)
+    SEMESTER = ('180', False)
+    YEAR = ('365', False)
+    OVERALL = ('All-time', True)
+
+    def __init__(self, duration, label_value):
+        self.duration = duration
+        self.label = duration if label_value else 'last-%s-days' % duration
 
     def get_value(self):
-        return self.value
+        return self.duration
 
     def get_label(self):
-        if self.value is None:
-            return self.name
-        else:
-            return 'last-%s-days' % self.value
+        return self.label
 
     @staticmethod
-    def from_value(str):
+    def from_value(val):
         for e in Duration:
-            if e.name == str:
+            if e.duration == val:
                 return e
 
 
@@ -59,8 +60,8 @@ class Year(TimePeriod, object):
 
 
 class PlotType(Enum):
-    PIE = 'plot_pie'
-    BARH = 'plot_barh'
+    Pie = 'plot_pie'
+    BarH = 'plot_barh'
 
     def __init__(self, method):
         self.method = method

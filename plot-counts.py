@@ -14,14 +14,14 @@ conf = get_lastfm_conf()
 
 mysql = MySQLdb.connect(
     user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['db_name'], charset='utf8')
+    db=conf['lastfm']['db']['dbName'], charset='utf8')
 
 mysql_cursor = mysql.cursor()
 
 
 def plot_play_counts_by_month():
     now = datetime.now()
-    years = range(2006, now.year + 1)
+    years = range(conf['lastfm']['service']['startYear'], now.year + 1)
 
     nb_cols = 4
     nb_rows = ceil(len(years) / nb_cols)
