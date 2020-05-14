@@ -5,11 +5,11 @@ from datetime import datetime
 
 from PIL import Image
 
-from lastfmConf.lastfmConf import get_lastfm_conf
-from lastfmPandas.lastfmPandas import DataFrameColumn, \
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmpandas.lfmpandas import DataFrameColumn, \
     AggregationType, OverType
-from lastfmPlot.lastfmPlot import PlotType, Duration, Year
-from plotTops.plotTops import plot
+from plottop.plotop import PlotType, Duration, Year
+from plot.plot import plot_top
 
 conf = get_lastfm_conf()
 
@@ -41,11 +41,10 @@ def parse_args():
 
 
 def save_plot(agg_type, image, label, plot_type):
-    if conf['plot']['saveEnabled']:
-        image.save(
-            'tops/{over_type}s/{label}/top-{agg_type}s-{label}-{plot_type}.png'.format(
-                over_type=agg_type.get_over_type(), agg_type=agg_type.get_top(),
-                label=label.lower(), plot_type=plot_type.get_name()))
+    image.save(
+        'tops/{over_type}s/{label}/top-{agg_type}s-{label}-{plot_type}.png'.format(
+            over_type=agg_type.get_over_type(), agg_type=agg_type.get_top(),
+            label=label.lower(), plot_type=plot_type.get_name()))
 
 
 def get_time_period(agg_type, value):
@@ -64,7 +63,7 @@ plot_type = PlotType.from_value(args.plotType)
 data_frame_column = DataFrameColumn.from_value(args.dataFrameColumn)
 
 time_period = get_time_period(agg_type, args.timePeriod)
-bio = plot(time_period, agg_type, plot_type, data_frame_column)
+bio = plot_top(time_period, agg_type, plot_type, data_frame_column)
 
 bio.seek(0)
 image = Image.open(bio)

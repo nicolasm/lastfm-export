@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import io
 from datetime import datetime
 from math import ceil
 from pathlib import Path
 
-import MySQLdb
 import matplotlib.pyplot as plt
 
-from lastfmConf.lastfmConf import get_lastfm_conf
-from lastfmPandas.lastfmPandas import retrieve_play_count_by_month_as_dataframe
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmpandas.lfmpandas import retrieve_play_count_by_month_as_dataframe
 
 conf = get_lastfm_conf()
 
-mysql = MySQLdb.connect(
-    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['dbName'], charset='utf8')
 
-mysql_cursor = mysql.cursor()
+def plot_top(time_period, agg_type, plot_type, data_frame_column):
+    label = time_period.get_label()
+    Path('./tops/%ss/%s' % (agg_type.get_over_type(), label.lower())).mkdir(
+        parents=True, exist_ok=True)
+    df = agg_type.retrieve(time_period.get_value(), 20)
+    bio = plot_type.plot(df, data_frame_column)
+    plt.close()
+    return bio
 
 
 def plot_play_counts_by_month():
@@ -33,15 +37,14 @@ def plot_play_counts_by_month():
         for j in range(0, nb_cols):
             if year_index < len(years):
                 year = str(years[year_index])
-                df = retrieve_play_count_by_month_as_dataframe(mysql_cursor, year)
+                df = retrieve_play_count_by_month_as_dataframe(year)
 
                 ax_array[i, j].plot(df.Month, df.PlayCount)
                 ax_array[i, j].set_title(year)
                 year_index = year_index + 1
 
-    Path('./tops').mkdir(parents=True, exist_ok=True)
-    plt.savefig('tops/play-count-by-month.png', format='png', dpi=150)
+    bio = io.BytesIO()
+    plt.savefig(bio, format='png', dpi=150)
     plt.close()
 
-
-plot_play_counts_by_month()
+    return bio

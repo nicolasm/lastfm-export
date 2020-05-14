@@ -5,14 +5,14 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="1" author="nicolas" context="Create json_track">
-        <createTable schemaName="lastfm" tableName="json_track">
+        <createTable tableName="json_track">
             <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
             <column name="json" type="json"/>
         </createTable>
         <rollback>
-            <dropTable schemaName="lastfm" tableName="json_track"/>
+            <dropTable tableName="json_track"/>
         </rollback>
     </changeSet>
 
@@ -21,7 +21,7 @@
     </changeSet>
 
     <changeSet id="3" author="nicolas" context="Create play table">
-        <createTable schemaName="lastfm" tableName="play">
+        <createTable tableName="play">
             <column name="id" type="int" autoIncrement="true">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -44,31 +44,31 @@
         </createTable>
 
         <rollback>
-            <dropTable schemaName="lastfm" tableName="play"/>
+            <dropTable tableName="play"/>
         </rollback>
     </changeSet>
 
     <changeSet id="4" author="nicolas" context="Create play indexes">
-        <createIndex schemaName="lastfm" tableName="play" indexName="play_date_test_idx">
+        <createIndex tableName="play" indexName="play_date_test_idx">
             <column name="play_date"/>
         </createIndex>
-        <createIndex schemaName="lastfm" tableName="play" indexName="play_artist_album_test_idx">
+        <createIndex tableName="play" indexName="play_artist_album_test_idx">
             <column name="artist_name"/>
             <column name="album_name"/>
         </createIndex>
-        <createIndex schemaName="lastfm" tableName="play" indexName="play_track_test_idx">
+        <createIndex tableName="play" indexName="play_track_test_idx">
             <column name="track_name"/>
         </createIndex>
 
         <rollback>
-            <dropIndex schemaName="lastfm" tableName="play" indexName="play_date_test_idx"/>
-            <dropIndex schemaName="lastfm" tableName="play" indexName="play_artist_album_test_idx"/>
-            <dropIndex schemaName="lastfm" tableName="play" indexName="play_track_test_idx"/>
+            <dropIndex tableName="play" indexName="play_date_test_idx"/>
+            <dropIndex tableName="play" indexName="play_artist_album_test_idx"/>
+            <dropIndex tableName="play" indexName="play_track_test_idx"/>
         </rollback>
     </changeSet>
 
     <changeSet id="5" author="nicolas" context="Create artist_replacement table">
-        <createTable schemaName="lastfm" tableName="artist_replacement">
+        <createTable tableName="artist_replacement">
             <column name="id" type="int" autoIncrement="true">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -84,7 +84,7 @@
         </createTable>
 
         <rollback>
-            <dropTable schemaName="lastfm" tableName="artist_replacement"/>
+            <dropTable tableName="artist_replacement"/>
         </rollback>
 
         <modifySql dbms="mysql">
@@ -93,12 +93,12 @@
     </changeSet>
 
     <changeSet id="6" author="nicolas" context="Create artist_replacement index">
-        <createIndex schemaName="lastfm" tableName="artist_replacement" indexName="replace_artist_album_name_idx">
+        <createIndex tableName="artist_replacement" indexName="replace_artist_album_name_idx">
             <column name="album_name"/>
         </createIndex>
 
         <rollback>
-            <dropIndex schemaName="lastfm" tableName="artist_replacement"
+            <dropIndex tableName="artist_replacement"
                        indexName="replace_artist_album_name_idx"/>
         </rollback>
     </changeSet>
@@ -107,19 +107,8 @@
         <tagDatabase tag="tables"/>
     </changeSet>
 
-    <changeSet id="8" author="nicolas" context="Create views">
-        <createView schemaName="lastfm" viewName="view_plays" replaceIfExists="true">
-            select p.id,
-                   p.track_name,
-                   p.artist_name,
-                   p.album_name,
-                   p.play_date_uts,
-                   p.play_date
-            from play p
-            order by p.id desc;
-        </createView>
-
-        <createView schemaName="lastfm" viewName="view_play_count_by_month" replaceIfExists="true">
+    <changeSet id="8" author="nicolas" context="Create views" dbms="mysql,mariadb">
+        <createView viewName="view_play_count_by_month">
             select date_format(p.play_date, '%Y-%m') as yr_month,
                    date_format(p.play_date, '%b') as month,
                    count(p.id) as count
@@ -129,12 +118,28 @@
         </createView>
 
         <rollback>
-            <dropView schemaName="lastfm" viewName="view_plays"/>
-            <dropView schemaName="lastfm" viewName="view_play_count_by_month"/>
+            <dropView viewName="view_play_count_by_month"/>
         </rollback>
     </changeSet>
 
-    <changeSet id="9" author="nicolas" context="Grants">
+    <changeSet id="9" author="nicolas" context="Create views" dbms="sqlite">
+        <createView viewName="view_play_count_by_month">
+            select strftime('%Y-%m', p.play_date) as yr_month,
+                   substr('JanFebMarAprMayJunJulAugSepOctNovDec',
+                          1 + 3 * strftime('%m', date(p.play_date)),
+                          -3) as month,
+                   count(p.id) as count
+            from play p
+            group by yr_month
+            order by yr_month;
+        </createView>
+
+        <rollback>
+            <dropView viewName="view_play_count_by_month"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="10" author="nicolas" context="Grants" dbms="mysql,mariadb">
         <sql>
             use lastfm;
 
@@ -221,7 +226,7 @@
         </sql>
 
         <rollback>
-            <delete schemaName="lastfm" tableName="artist_replacement"/>
+            <delete tableName="artist_replacement"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

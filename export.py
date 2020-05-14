@@ -24,23 +24,18 @@
 import json
 import sys
 
-import MySQLdb
-
-from lastfm.lastfm import LastfmStats, recent_tracks, \
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmdb import lfmdb
+from lfmstats.lfmstats import LastfmStats, recent_tracks, \
     retrieve_total_json_tracks_from_db
-from lastfmConf.lastfmConf import get_lastfm_conf
+from queries.inserts import get_query_insert_json_track
 
 conf = get_lastfm_conf()
 
 user = conf['lastfm']['service']['username']
 api_key = conf['lastfm']['service']['apiKey']
 
-mysql = MySQLdb.connect(
-    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['dbName'], charset='utf8')
-mysql_cursor = mysql.cursor()
-
-lastfm_stats = LastfmStats.get_lastfm_stats(mysql, user, api_key)
+lastfm_stats = LastfmStats.get_lastfm_stats(user, api_key)
 total_pages = lastfm_stats.nb_delta_pages()
 total_plays_in_db = lastfm_stats.nb_json_tracks_in_db
 
@@ -89,13 +84,9 @@ for page_num, page in enumerate(all_pages):
         print('Track', track_num + 1, 'of', num_tracks)
         json_tracks.append(json.dumps(track))
 
-    try:
-        query = 'insert into lastfm.json_track(json) values (%s)'
-        mysql_cursor.executemany(query, json_tracks)
-        mysql.commit()
-    except mysql.Error as e:
-            print(e)
-            mysql.rollback()
+        try:
+            lfmdb.insert_many(get_query_insert_json_track(), json_tracks)
+        except Exception:
             sys.exit(1)
 
-print('Done!', retrieve_total_json_tracks_from_db(mysql), 'rows in table json_track.')
+print('Done!', retrieve_total_json_tracks_from_db(), 'rows in table json_track.')

@@ -4,6 +4,9 @@ import urllib
 
 import requests
 
+from queries.counts import get_query_count_json_tracks, get_query_count_plays
+from lfmdb import lfmdb
+
 api_url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&format=json&page=%s&limit=%s'
 track_api_url = 'http://ws.audioscrobbler.com/2.0/?method=track.getinfo&api_key=%s&format=json&artist=%s&track=%s&autocorrect=1'
 
@@ -31,30 +34,27 @@ class LastfmStats(object):
                % LastfmStats.plays_per_page
 
     @staticmethod
-    def get_lastfm_stats(mysql, user, api_key):
+    def get_lastfm_stats(user, api_key):
         # We need to get the first page so we can find out how many total pages there are in our listening history.
         resp = recent_tracks(user, api_key, 1)
         total_pages = int(resp['recenttracks']['@attr']['totalPages'])
         total_plays_in_lastfm = int(resp['recenttracks']['@attr']['total'])
 
-        total_plays_in_db = retrieve_total_json_tracks_from_db(mysql)
+        total_plays_in_db = retrieve_total_json_tracks_from_db()
+        print(total_plays_in_db)
 
         return LastfmStats(total_pages, total_plays_in_lastfm,
                            total_plays_in_db)
 
 
-def retrieve_total_json_tracks_from_db(mysql):
+def retrieve_total_json_tracks_from_db():
     """Get total json_tracks from the database."""
-    mysql.query('select count(*) from json_track')
-    result = mysql.use_result()
-    return result.fetch_row()[0][0]
+    return lfmdb.select_one(get_query_count_json_tracks())
 
 
-def retrieve_total_plays_from_db(mysql):
+def retrieve_total_plays_from_db():
     """Get total plays from the database."""
-    mysql.query('select count(*) from play')
-    result = mysql.use_result()
-    return result.fetch_row()[0][0]
+    return lfmdb.select_one(get_query_count_plays())
 
 
 def recent_tracks(user, api_key, page):
@@ -96,10 +96,3 @@ def process_track(track):
         if val == '':
             flattened[key] = None
     return flattened
-
-
-def check_track_in_db(mysql, track_name, artist_name, album_name):
-    cursor = mysql.cursor()
-    cursor.execute("select check_track_in_db(%s, %s, %s)",
-                   (track_name, artist_name, album_name))
-    return cursor.fetchone()[0]

@@ -5,11 +5,11 @@ from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
 
-from lastfmConf.lastfmConf import get_lastfm_conf
-from lastfmPandas.lastfmPandas import AggregationType, DataFrameColumn, Top, \
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmpandas.lfmpandas import AggregationType, DataFrameColumn, Top, \
     OverType
-from lastfmPlot.lastfmPlot import Duration, Year, PlotType
-from plotTops.plotTops import plot
+from plottop.plotop import Duration, Year, PlotType
+from plot.plot import plot_top
 
 ENTITY, TIME_PERIOD_TYPE, TIME_PERIOD, PLOT_TYPE, COLUMN = range(5)
 
@@ -128,7 +128,7 @@ def column(update, context):
     elif time_period_type == OverType.Year.name:
         tp_value = Year(time_period)
 
-    bio = plot(tp_value, agg_type, plot_type, data_frame_column)
+    bio = plot_top(tp_value, agg_type, plot_type, data_frame_column)
     bio.seek(0)
 
     update.message.reply_photo(bio)

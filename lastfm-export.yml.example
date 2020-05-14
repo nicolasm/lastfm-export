@@ -7,6 +7,13 @@ lastfm:
         dbName: lastfm
         user: lastfm
         password: password
+        dbms: sqlite
+        mysql:
+            dbName: lastfm
+            user: lastfm
+            password: password
+        sqlite:
+            dbName: lastfm.sqlite
 plot:
     saveEnabled: True
     sendViaTelegram: True

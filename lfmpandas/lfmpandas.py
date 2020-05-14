@@ -4,11 +4,12 @@ from enum import Enum
 
 import pandas
 
-from lastfmSql.lastfmSql import build_query_top_artists_for_duration, \
+from lfmdb.lfmdb import select
+from queries.tops import build_query_top_artists_for_duration, \
     build_query_top_artists_for_year, build_query_top_albums_for_duration, \
     build_query_top_albums_for_year, build_query_top_tracks_for_duration, \
     build_query_top_tracks_for_year, build_query_play_count_for_duration, \
-    build_query_play_count_for_year
+    build_query_play_count_for_year, build_query_play_count_by_month
 
 
 class DataFrameColumn(Enum):
@@ -58,8 +59,8 @@ class AggregationType(Enum):
         self.over_type = over_type
         self.method = method
 
-    def retrieve(self, cursor, agg_value, limit, remove_remaining=True):
-        df = eval(self.method)(cursor, agg_value, limit)
+    def retrieve(self, agg_value, limit, remove_remaining=True):
+        df = eval(self.method)(agg_value, limit)
         if remove_remaining:
             df = df[df[self.top.name.title()] != 'Remaining %ss' % self.get_top()]
         return df
@@ -77,79 +78,60 @@ class AggregationType(Enum):
                 return e
 
 
-def retrieve_play_count_by_month_as_dataframe(cursor, year):
-    cursor.execute('select * from view_play_count_by_month v where substr(v.yr_month, 1, 4) = %s' % year)
-    rows = cursor.fetchall()
+def retrieve_play_count_by_month_as_dataframe(year):
+    query = build_query_play_count_by_month()
+    rows = select(query, (year,))
     df = pandas.DataFrame(rows, columns=['YearMonth', 'Month', 'PlayCount'], dtype='int64')
     df['YearMonth'] = pandas.to_datetime(df['YearMonth'], format='%Y-%m')
     df = df.sort_values(by='YearMonth')
     return df
 
 
-def retrieve_play_count_by_day_as_dataframe(cursor):
-    select = 'select date_format(p.play_date, \'%y-%m-%d\') as day, count(p.id) as count from play p'
-    where = 'where p.play_date > date_add(CURRENT_TIMESTAMP, interval -30 day)'
-    group_and_order = 'group by day order by day desc'
-    cursor.execute('%s %s %s' % (select, where, group_and_order))
-    rows = cursor.fetchall()
-
-    df = pandas.DataFrame([[ij for ij in i] for i in rows])
-    df.rename(columns={0: 'Day', 1: 'PlayCount'}, inplace=True)
-    df['Day'] = pandas.to_datetime(df['Day'], format='%y-%m-%d')
-    return df.head(30)
+def retrieve_total_play_count(nb_days):
+    query = build_query_play_count_for_duration(nb_days)
+    rows = select(query, (nb_days,))
+    return rows[0]
 
 
-def retrieve_recent_plays_as_dataframe(cursor):
-    cursor.execute('select * from view_plays')
-    rows = cursor.fetchall()
-
-    df = pandas.DataFrame([[ij for ij in i] for i in rows])
-    df = df.drop(4, 1)
-    df.rename(
-        columns={0: 'Track nb', 1: 'Track', 2: 'Artist', 3: 'Album', 5: 'Date'},
-        inplace=True);
-    return df.head(30)
+def retrieve_total_play_count_for_year(for_year):
+    query = build_query_play_count_for_year()
+    rows = select(query, (for_year,))
+    return rows[0]
 
 
-def retrieve_total_play_count(cursor, nb_days):
-    cursor.execute(build_query_play_count_for_duration(nb_days))
-    return cursor.fetchone()[0]
+def retrieve_top_artists_as_dataframe(nb_days, limit):
+    params = build_duration_params(nb_days, limit)
+    query = build_query_top_artists_for_duration(nb_days)
+    rows = select(query, params)
+    return create_artists_dataframe(rows)
 
 
-def retrieve_total_play_count_for_year(cursor, for_year):
-    cursor.execute(build_query_play_count_for_year(for_year))
-    return cursor.fetchone()[0]
+def retrieve_top_artists_for_year_as_dataframe(for_year, limit):
+    query = build_query_top_artists_for_year()
+    rows = select(query, (for_year, limit))
+    return create_artists_dataframe(rows)
 
 
-def retrieve_top_artists_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(build_query_top_artists_for_duration(nb_days, limit))
-    return create_artists_dataframe(cursor)
-
-
-def retrieve_top_artists_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(build_query_top_artists_for_year(for_year, limit))
-    return create_artists_dataframe(cursor)
-
-
-def create_artists_dataframe(cursor):
-    rows = cursor.fetchall()
+def create_artists_dataframe(rows):
     df = pandas.DataFrame(rows, columns=['Artist', 'PlayCount'], dtype='int64')
     df = df.sort_values(by='PlayCount', ascending=False)
     return df
 
 
-def retrieve_top_albums_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(build_query_top_albums_for_duration(nb_days, limit))
-    return create_albums_dataframe(cursor)
+def retrieve_top_albums_as_dataframe(nb_days, limit):
+    params = build_duration_params(nb_days, limit)
+    query = build_query_top_albums_for_duration(nb_days)
+    rows = select(query, params)
+    return create_albums_dataframe(rows)
 
 
-def retrieve_top_albums_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(build_query_top_albums_for_year(for_year, limit))
-    return create_albums_dataframe(cursor)
+def retrieve_top_albums_for_year_as_dataframe(for_year, limit):
+    query = build_query_top_albums_for_year()
+    rows = select(query, (for_year, limit))
+    return create_albums_dataframe(rows)
 
 
-def create_albums_dataframe(cursor):
-    rows = cursor.fetchall()
+def create_albums_dataframe(rows):
     df = pandas.DataFrame(rows, columns=['Album', 'Artist', 'PlayCount'],
                           dtype='int64')
     df["ArtistAlbum"] = df["Artist"] + " - " + df["Album"]
@@ -157,18 +139,27 @@ def create_albums_dataframe(cursor):
     return df
 
 
-def retrieve_top_tracks_as_dataframe(cursor, nb_days, limit):
-    cursor.execute(build_query_top_tracks_for_duration(nb_days, limit))
-    return create_tracks_dataframe(cursor)
+def retrieve_top_tracks_as_dataframe(nb_days, limit):
+    params = build_duration_params(nb_days, limit)
+    query = build_query_top_tracks_for_duration(nb_days)
+    rows = select(query, params)
+    return create_tracks_dataframe(rows)
 
 
-def retrieve_top_tracks_for_year_as_dataframe(cursor, for_year, limit):
-    cursor.execute(build_query_top_tracks_for_year(for_year, limit))
-    return create_tracks_dataframe(cursor)
+def build_duration_params(nb_days, limit):
+    params = (limit,)
+    if nb_days.isdigit():
+        params = (nb_days,) + params
+    return params
 
 
-def create_tracks_dataframe(cursor):
-    rows = cursor.fetchall()
+def retrieve_top_tracks_for_year_as_dataframe(for_year, limit):
+    query = build_query_top_tracks_for_year()
+    rows = select(query, (for_year, limit))
+    return create_tracks_dataframe(rows)
+
+
+def create_tracks_dataframe(rows):
     df = pandas.DataFrame(rows,
                           columns=['Track', 'Artist', 'Album', 'PlayCount'],
                           dtype='int64')

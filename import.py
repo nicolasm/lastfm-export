@@ -4,21 +4,16 @@
 import json
 import sys
 
-import MySQLdb
-
-from lastfm.lastfm import process_track, retrieve_total_plays_from_db, \
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmdb import lfmdb
+from lfmstats.lfmstats import process_track, retrieve_total_plays_from_db, \
     retrieve_total_json_tracks_from_db
-from lastfmConf.lastfmConf import get_lastfm_conf
+from queries.inserts import get_query_insert_play
 
 conf = get_lastfm_conf()
 
-mysql = MySQLdb.connect(
-    user=conf['lastfm']['db']['user'], passwd=conf['lastfm']['db']['password'],
-    db=conf['lastfm']['db']['dbName'], charset='utf8')
-mysql_cursor = mysql.cursor()
-
-nb_json_tracks_in_db = retrieve_total_json_tracks_from_db(mysql)
-nb_plays_in_db = retrieve_total_plays_from_db(mysql)
+nb_json_tracks_in_db = retrieve_total_json_tracks_from_db()
+nb_plays_in_db = retrieve_total_plays_from_db()
 nb_plays_to_insert = nb_json_tracks_in_db - nb_plays_in_db
 
 query = """
@@ -31,10 +26,13 @@ if nb_plays_to_insert == 0:
     print('Nothing new!')
     sys.exit(0)
 
-mysql_cursor.execute(query % nb_plays_to_insert)
+new_plays = lfmdb.select(query % nb_plays_to_insert)
+
+connection = lfmdb.create_connection()
+cursor = connection.cursor()
 
 parameters = []
-for (track_id, json_track) in mysql_cursor:
+for (track_id, json_track) in new_plays:
     print('Track', track_id)
     track = json.loads(json_track)
 
@@ -52,27 +50,20 @@ for (track_id, json_track) in mysql_cursor:
         track_name = track_name[:512]
 
     try:
-        insert_query = 'insert into play(artist_name, artist_mbid,' \
-                       'album_name, album_mbid,' \
-                       'track_name, track_mbid, track_url,' \
-                       'play_date_uts, play_date) ' \
-                       'values ' \
-                       '(%s, %s, %s, %s, %s, %s, %s, %s, FROM_UNIXTIME(play_date_uts))'
-        mysql_cursor.execute(insert_query,
-                             (artist_name,
-                              transformed_track['artist_mbid'],
-                              album_name,
-                              transformed_track['album_mbid'],
-                              track_name,
-                              transformed_track['mbid'],
-                              transformed_track['url'],
-                              transformed_track['date_uts']
-                              ))
-        mysql.commit()
-    except mysql.Error as e:
-        print(e)
+        insert_query = get_query_insert_play()
+        lfmdb.insert(insert_query, (artist_name,
+                                    transformed_track['artist_mbid'],
+                                    album_name,
+                                    transformed_track['album_mbid'],
+                                    track_name,
+                                    transformed_track['mbid'],
+                                    transformed_track['url'],
+                                    transformed_track['date_uts'],
+                                    transformed_track['date_uts']
+                                    ))
+    except Exception as e:
         print(track_name, ', ', artist_name)
-        mysql.rollback()
         sys.exit(1)
-
-mysql_cursor.close()
+    finally:
+        cursor.close()
+        connection.close()
