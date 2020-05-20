@@ -47,12 +47,24 @@ class OverType(Enum):
 
 
 class AggregationType(Enum):
-    DurationArtist = (Top.Artist, OverType.Duration, 'retrieve_top_artists_as_dataframe')
-    DurationAlbum = (Top.Album, OverType.Duration, 'retrieve_top_albums_as_dataframe')
-    DurationTrack = (Top.Track, OverType.Duration, 'retrieve_top_tracks_as_dataframe')
-    YearArtist = (Top.Artist, OverType.Year, 'retrieve_top_artists_for_year_as_dataframe')
-    YearAlbum = (Top.Album, OverType.Year, 'retrieve_top_albums_for_year_as_dataframe')
-    YearTrack = (Top.Track, OverType.Year, 'retrieve_top_tracks_for_year_as_dataframe')
+    DurationArtist = (Top.Artist,
+                      OverType.Duration,
+                      'retrieve_top_artists_for_duration_as_dataframe')
+    DurationAlbum = (Top.Album,
+                     OverType.Duration,
+                     'retrieve_top_albums_for_duration_as_dataframe')
+    DurationTrack = (Top.Track,
+                     OverType.Duration,
+                     'retrieve_top_tracks_for_duration_as_dataframe')
+    YearArtist = (Top.Artist,
+                  OverType.Year,
+                  'retrieve_top_artists_for_year_as_dataframe')
+    YearAlbum = (Top.Album,
+                 OverType.Year,
+                 'retrieve_top_albums_for_year_as_dataframe')
+    YearTrack = (Top.Track,
+                 OverType.Year,
+                 'retrieve_top_tracks_for_year_as_dataframe')
 
     def __init__(self, top, over_type, method):
         self.top = top
@@ -99,7 +111,7 @@ def retrieve_total_play_count_for_year(for_year):
     return rows[0]
 
 
-def retrieve_top_artists_as_dataframe(nb_days, limit):
+def retrieve_top_artists_for_duration_as_dataframe(nb_days, limit):
     params = build_duration_params(nb_days, limit)
     query = build_query_top_artists_for_duration(nb_days)
     rows = select(query, params)
@@ -118,7 +130,7 @@ def create_artists_dataframe(rows):
     return df
 
 
-def retrieve_top_albums_as_dataframe(nb_days, limit):
+def retrieve_top_albums_for_duration_as_dataframe(nb_days, limit):
     params = build_duration_params(nb_days, limit)
     query = build_query_top_albums_for_duration(nb_days)
     rows = select(query, params)
@@ -139,7 +151,7 @@ def create_albums_dataframe(rows):
     return df
 
 
-def retrieve_top_tracks_as_dataframe(nb_days, limit):
+def retrieve_top_tracks_for_duration_as_dataframe(nb_days, limit):
     params = build_duration_params(nb_days, limit)
     query = build_query_top_tracks_for_duration(nb_days)
     rows = select(query, params)

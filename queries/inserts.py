@@ -1,10 +1,10 @@
 from lfmconf.lfmconf import get_lastfm_conf
 
-QUERY_INSERT_INTO_JSON_TRACK = {
+query_insert_into_json_track = {
     'mysql': 'insert into json_track(json) values (%s)',
     'sqlite': 'insert into json_track(json) values (?)'}
 
-QUERY_INSERT_INTO_PLAY = {
+query_insert_into_play = {
     'mysql': """
     insert into play(artist_name, artist_mbid,
                      album_name, album_mbid,
@@ -26,8 +26,8 @@ dbms = conf['lastfm']['db']['dbms']
 
 
 def get_query_insert_json_track():
-    return QUERY_INSERT_INTO_JSON_TRACK[dbms]
+    return query_insert_into_json_track[dbms]
 
 
 def get_query_insert_play():
-    return QUERY_INSERT_INTO_PLAY[dbms]
+    return query_insert_into_play[dbms]

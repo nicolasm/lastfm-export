@@ -6,7 +6,7 @@ import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmdb import lfmdb
-from lfmstats.lfmstats import process_track, retrieve_total_plays_from_db, \
+from stats.stats import process_track, retrieve_total_plays_from_db, \
     retrieve_total_json_tracks_from_db
 from queries.inserts import get_query_insert_play
 
@@ -51,7 +51,9 @@ for (track_id, json_track) in new_plays:
 
     try:
         insert_query = get_query_insert_play()
-        lfmdb.insert(insert_query, (artist_name,
+        lfmdb.insert(connection,
+                     cursor,
+                     insert_query, (artist_name,
                                     transformed_track['artist_mbid'],
                                     album_name,
                                     transformed_track['album_mbid'],
@@ -62,8 +64,9 @@ for (track_id, json_track) in new_plays:
                                     transformed_track['date_uts']
                                     ))
     except Exception as e:
+        print('exception', e)
         print(track_name, ', ', artist_name)
         sys.exit(1)
-    finally:
-        cursor.close()
-        connection.close()
+
+cursor.close()
+connection.close()

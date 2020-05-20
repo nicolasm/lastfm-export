@@ -1,11 +1,11 @@
 from lfmconf.lfmconf import get_lastfm_conf
 
-QUERY_PLAY_COUNT_BY_MONTH = """
+query_play_count_by_month = """
     select * from view_play_count_by_month v
     where substr(v.yr_month, 1, 4) =
 """
 
-QUERY_TOP_WITH_REMAINING = """
+query_top_with_remaining = """
     with top as (
         {query_top}
     ),
@@ -17,7 +17,7 @@ QUERY_TOP_WITH_REMAINING = """
     from top t
 """
 
-QUERY_TOP_ARTISTS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
+query_top_artists_with_remaining = query_top_with_remaining + \
 """
     union all
     select 'Remaining artists' as artist_name,
@@ -26,7 +26,7 @@ QUERY_TOP_ARTISTS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
     (select sum(play_count) from top)) as play_count
 """
 
-QUERY_TOP_ALBUMS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
+query_top_albums_with_remaining = query_top_with_remaining + \
 """
     union all
     select 'Remaining albums' as album_name,
@@ -35,7 +35,7 @@ QUERY_TOP_ALBUMS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
     -
     (select sum(play_count) from top)) as play_count
 """
-QUERY_TOP_TRACKS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
+query_top_tracks_with_remaining = query_top_with_remaining + \
 """
     union all
     select 'Remaining tracks' as track_name,
@@ -46,7 +46,7 @@ QUERY_TOP_TRACKS_WITH_REMAINING = QUERY_TOP_WITH_REMAINING + \
     (select sum(play_count) from top)) as play_count
 """
 
-QUERY_TOP_ARTISTS = """
+query_top_artists = """
     select p.artist_name,
            count(p.id) as play_count
     from play p
@@ -56,7 +56,7 @@ QUERY_TOP_ARTISTS = """
     order by count(p.id) desc
 """
 
-QUERY_TOP_ALBUMS = """
+query_top_albums = """
     select p.album_name,
            p.artist_name,
            count(p.id) as play_count
@@ -67,7 +67,7 @@ QUERY_TOP_ALBUMS = """
     order by count(p.id) desc
 """
 
-QUERY_TOP_TRACKS = """
+query_top_tracks = """
     select p.track_name,
            p.artist_name,
            p.album_name,
@@ -79,7 +79,7 @@ QUERY_TOP_TRACKS = """
     order by count(p.id) desc
 """
 
-QUERY_PLAY_COUNT = """
+query_play_count = """
     select count(p.id) as play_count
     from play p
     where 1 = 1
@@ -92,26 +92,26 @@ dbms = conf['lastfm']['db']['dbms']
 
 def build_query_play_count_by_month():
     if dbms == 'mysql':
-        return QUERY_PLAY_COUNT_BY_MONTH + '%s'
+        return query_play_count_by_month + '%s'
     elif dbms == 'sqlite':
-        return QUERY_PLAY_COUNT_BY_MONTH + '?'
+        return query_play_count_by_month + '?'
 
 
 def build_query_play_count_for_duration(duration):
     condition = build_duration_condition(duration)
-    return QUERY_PLAY_COUNT.format(condition=condition)
+    return query_play_count.format(condition=condition)
 
 
 def build_query_top_artists_for_duration_with_remaining(duration):
     query_top = build_query_top_artists_for_duration(duration)
     query_count = build_query_play_count_for_duration(duration)
-    return QUERY_TOP_ARTISTS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_artists_with_remaining.format(query_top=query_top,
                                                    query_play_count=query_count)
 
 
 def build_query_top_artists_for_duration(duration):
     condition = build_duration_condition(duration)
-    return QUERY_TOP_ARTISTS.format(condition=condition) + add_limit()
+    return query_top_artists.format(condition=condition) + add_limit()
 
 
 def add_limit():
@@ -126,66 +126,66 @@ def add_limit():
 def build_query_top_albums_for_duration_with_remaining(duration):
     query_top = build_query_top_albums_for_duration(duration)
     query_count = build_query_play_count_for_duration(duration)
-    return QUERY_TOP_ALBUMS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_albums_with_remaining.format(query_top=query_top,
                                                   query_play_count=query_count)
 
 
 def build_query_top_albums_for_duration(duration):
     condition = build_duration_condition(duration)
-    return QUERY_TOP_ALBUMS.format(condition=condition) + add_limit()
+    return query_top_albums.format(condition=condition) + add_limit()
 
 
 def build_query_top_tracks_for_duration_with_remaining(duration):
     query_top = build_query_top_tracks_for_duration(duration)
     query_count = build_query_play_count_for_duration(duration)
-    return QUERY_TOP_TRACKS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_tracks_with_remaining.format(query_top=query_top,
                                                   query_play_count=query_count)
 
 
 def build_query_top_tracks_for_duration(duration):
     condition = build_duration_condition(duration)
-    return QUERY_TOP_TRACKS.format(condition=condition) + add_limit()
+    return query_top_tracks.format(condition=condition) + add_limit()
 
 
 def build_query_play_count_for_year():
     condition = build_year_condition()
-    return QUERY_PLAY_COUNT.format(condition=condition)
+    return query_play_count.format(condition=condition)
 
 
 def build_query_top_artists_for_year_with_remaining():
     query_top = build_query_top_artists_for_year()
     query_count = build_query_play_count_for_year()
-    return QUERY_TOP_ARTISTS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_artists_with_remaining.format(query_top=query_top,
                                                    query_play_count=query_count)
 
 
 def build_query_top_artists_for_year():
     condition = build_year_condition()
-    return QUERY_TOP_ARTISTS.format(condition=condition) + add_limit()
+    return query_top_artists.format(condition=condition) + add_limit()
 
 
 def build_query_top_albums_for_year_with_remaining():
     query_top = build_query_top_albums_for_year()
     query_count = build_query_play_count_for_year()
-    return QUERY_TOP_ALBUMS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_albums_with_remaining.format(query_top=query_top,
                                                   query_play_count=query_count)
 
 
 def build_query_top_albums_for_year():
     condition = build_year_condition()
-    return QUERY_TOP_ALBUMS.format(condition=condition) + add_limit()
+    return query_top_albums.format(condition=condition) + add_limit()
 
 
 def build_query_top_tracks_for_year_with_remaining():
     query_top = build_query_top_tracks_for_year()
     query_count = build_query_play_count_for_year()
-    return QUERY_TOP_TRACKS_WITH_REMAINING.format(query_top=query_top,
+    return query_top_tracks_with_remaining.format(query_top=query_top,
                                                   query_play_count=query_count)
 
 
 def build_query_top_tracks_for_year():
     condition = build_year_condition()
-    return QUERY_TOP_TRACKS.format(condition=condition) + add_limit()
+    return query_top_tracks.format(condition=condition) + add_limit()
 
 
 def build_duration_condition(duration):

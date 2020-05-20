@@ -26,7 +26,7 @@ import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmdb import lfmdb
-from lfmstats.lfmstats import LastfmStats, recent_tracks, \
+from stats.stats import LastfmStats, recent_tracks, \
     retrieve_total_json_tracks_from_db
 from queries.inserts import get_query_insert_json_track
 
@@ -84,9 +84,9 @@ for page_num, page in enumerate(all_pages):
         print('Track', track_num + 1, 'of', num_tracks)
         json_tracks.append(json.dumps(track))
 
-        try:
-            lfmdb.insert_many(get_query_insert_json_track(), json_tracks)
-        except Exception:
-            sys.exit(1)
+    try:
+        lfmdb.insert_many(get_query_insert_json_track(), json_tracks)
+    except Exception:
+        sys.exit(1)
 
 print('Done!', retrieve_total_json_tracks_from_db(), 'rows in table json_track.')
