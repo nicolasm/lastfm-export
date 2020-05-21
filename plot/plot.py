@@ -8,6 +8,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from lfmconf.lfmconf import get_lastfm_conf
+from lfmpandas.artist_counts import retrieve_artist_counts, \
+    retrieve_artist_counts_for_year
 from lfmpandas.lfmpandas import retrieve_play_count_by_month_as_dataframe
 
 conf = get_lastfm_conf()
@@ -44,7 +46,39 @@ def plot_play_counts_by_month():
                 year_index = year_index + 1
 
     bio = io.BytesIO()
-    plt.savefig(bio, format='png', dpi=150)
+    plt.savefig(bio, format='png', dpi=150, bbox_inches='tight')
+    plt.close()
+
+    return bio
+
+
+def plot_artist_counts(artist_name):
+    dfs = retrieve_artist_counts(artist_name)
+
+    f, ax_array = plt.subplots(2, 1, figsize=(10,10))
+
+    ax_array[0].barh(dfs[0].AlbumName, dfs[0].PlayCount, color='pink')
+    ax_array[1].barh(dfs[1].Year, dfs[1].PlayCount, color='pink')
+    ax_array[1].set_yticks(dfs[1].Year)
+
+    bio = io.BytesIO()
+    plt.savefig(bio, format='png', dpi=150, bbox_inches='tight')
+    plt.close()
+
+    return bio
+
+
+def plot_artist_counts_for_year(artist_name, year):
+    dfs = retrieve_artist_counts_for_year(artist_name, str(year))
+
+    f, ax_array = plt.subplots(2, 1, figsize=(10,10))
+
+    ax_array[0].barh(dfs[0].AlbumName, dfs[0].PlayCount, color='pink')
+    ax_array[1].barh(dfs[1].YearMonth, dfs[1].PlayCount, color='pink')
+    ax_array[1].set_yticks(dfs[1].YearMonth)
+
+    bio = io.BytesIO()
+    plt.savefig(bio, format='png', dpi=150, bbox_inches='tight')
     plt.close()
 
     return bio

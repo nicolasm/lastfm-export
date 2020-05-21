@@ -69,7 +69,7 @@ class PlotType(Enum):
     def plot(self, df, column):
         eval(self.method)(df, column.name)
         bio = io.BytesIO()
-        plt.savefig(bio, format='png', dpi=300)
+        plt.savefig(bio, format='png', dpi=150, bbox_inches='tight')
         return bio
 
     def get_name(self):
@@ -93,14 +93,14 @@ def plot_barh(df, xcolumn):
     ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 5), rot=0,
                       color=selected_colors)
 
-    # create a list to collect the plt.patches data
-    totals = []
-
-    # find the values and append to list
-    for i in ax.patches:
-        totals.append(i.get_width())
-
-    for i in ax.patches:
-        # get_width pulls left or right; get_y pushes up or down
-        ax.text(i.get_width() + .3, i.get_y(), i.get_width(), fontsize=15,
-                color='dimgrey')
+    # # create a list to collect the plt.patches data
+    # totals = []
+    #
+    # # find the values and append to list
+    # for i in ax.patches:
+    #     totals.append(i.get_width())
+    #
+    # for i in ax.patches:
+    #     # get_width pulls left or right; get_y pushes up or down
+    #     ax.text(i.get_width() + .3, i.get_y(), i.get_width(), fontsize=15,
+    #             color='dimgrey')
