@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import argparse
+import logging
 from datetime import datetime
 
 from PIL import Image
@@ -8,8 +9,13 @@ from PIL import Image
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmpandas.lfmpandas import DataFrameColumn, \
     AggregationType, OverType
-from plottop.plotop import PlotType, Duration, Year
 from plot.plot import plot_top
+from plottop.plotop import PlotType, Duration, Year
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=f'%(asctime)s %(levelname)s %(message)s'
+)
 
 conf = get_lastfm_conf()
 

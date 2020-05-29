@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 
 import MySQLdb
@@ -45,17 +46,18 @@ def select(query, params=()):
         connection.close()
 
 
-def insert(connection, cursor, query, tuple):
+def insert(connection, cursor, query, tuple_in):
     try:
-        cursor.execute(query, tuple)
+        cursor.execute(query, tuple_in)
         connection.commit()
     except (MySQLdb.Error, sqlite3.Error) as e:
-        print(e)
+        logging.exception('An error occurred when inserting into database')
         connection.rollback()
         raise Exception
 
 
 def insert_many(query, values):
+    connection = None
     try:
         connection = create_connection()
         cursor = connection.cursor()
@@ -64,6 +66,6 @@ def insert_many(query, values):
         cursor.executemany(query, values)
         connection.commit()
     except (MySQLdb.Error, sqlite3.Error) as e:
-        print(e)
+        logging.exception('An error occurred when inserting into database')
         connection.rollback()
         raise Exception

@@ -41,7 +41,6 @@ class LastfmStats(object):
         total_plays_in_lastfm = int(resp['recenttracks']['@attr']['total'])
 
         total_plays_in_db = retrieve_total_json_tracks_from_db()
-        print(total_plays_in_db)
 
         return LastfmStats(total_pages, total_plays_in_lastfm,
                            total_plays_in_db)

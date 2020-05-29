@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import logging
 import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
@@ -9,6 +10,11 @@ from lfmdb import lfmdb
 from stats.stats import process_track, retrieve_total_plays_from_db, \
     retrieve_total_json_tracks_from_db
 from queries.inserts import get_query_insert_play
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=f'%(asctime)s %(levelname)s %(message)s'
+)
 
 conf = get_lastfm_conf()
 
@@ -23,7 +29,7 @@ order by id
 """
 
 if nb_plays_to_insert == 0:
-    print('Nothing new!')
+    logging.info('Nothing new!')
     sys.exit(0)
 
 new_plays = lfmdb.select(query % nb_plays_to_insert)
@@ -33,7 +39,7 @@ cursor = connection.cursor()
 
 parameters = []
 for (track_id, json_track) in new_plays:
-    print('Track', track_id)
+    logging.info('Track %s' % track_id)
     track = json.loads(json_track)
 
     transformed_track = process_track(track)
@@ -64,8 +70,8 @@ for (track_id, json_track) in new_plays:
                                     transformed_track['date_uts']
                                     ))
     except Exception as e:
-        print('exception', e)
-        print(track_name, ', ', artist_name)
+        logging.exception('An error occurred when inserting play into database!')
+        logging.error(track_name, ', ', artist_name)
         sys.exit(1)
 
 cursor.close()

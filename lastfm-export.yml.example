@@ -4,9 +4,6 @@ lastfm:
         apiKey: apikey
         startYear: 2006
     db:
-        dbName: lastfm
-        user: lastfm
-        password: password
         dbms: sqlite
         mysql:
             dbName: lastfm

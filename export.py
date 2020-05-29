@@ -3,25 +3,13 @@
 
 #######################################################################
 # This script imports your Last.fm listening history                  #
-# inside a MySQL database.                                            #
+# inside a MySQL or Sqlite database.                                  #
 #                                                                     #
-# The original script has been developed by Matthew Lewis:            #
-# http://mplewis.com/files/lastfm-scraper.html                        #
-# It was coded to do a one-time import in a SQLite database.          #
-# Copyright (c) 2014+2015, Matthew Lewis                              #
-#                                                                     #
-# I have changed it in the following ways:                            #
-# - MySQL with a normalised database                                  #
-# - import the missing tracks by comparing Last.fm number of tracks   #
-#    against the database                                             #
-# - getting rid of the "nowplaying" track if found                    #
-# - reading user logins, passwords from .netrc                        #
-# - insert the tracks in order of play                                #
-#                                                                     #
-# Copyright (c) 2015, Nicolas Meier                                   #
+# Copyright (c) 2015-2020, Nicolas Meier                              #
 #######################################################################
 
 import json
+import logging
 import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
@@ -29,6 +17,11 @@ from lfmdb import lfmdb
 from stats.stats import LastfmStats, recent_tracks, \
     retrieve_total_json_tracks_from_db
 from queries.inserts import get_query_insert_json_track
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=f'%(asctime)s %(levelname)s %(message)s'
+)
 
 conf = get_lastfm_conf()
 
@@ -39,20 +32,20 @@ lastfm_stats = LastfmStats.get_lastfm_stats(user, api_key)
 total_pages = lastfm_stats.nb_delta_pages()
 total_plays_in_db = lastfm_stats.nb_json_tracks_in_db
 
-print('Nb page to get: ', total_pages)
+logging.info('Nb page to get: %d' % total_pages)
 
 if total_pages == 0:
-    print('Nothing to update!')
+    logging.info('Nothing to update!')
     sys.exit(1)
 
 all_pages = []
 
 for page_num in range(total_pages, 0, -1):
-    print('Page', page_num, 'of', total_pages)
+    logging.info('Page %d of %d' % (page_num, total_pages))
     page = recent_tracks(user, api_key, page_num)
 
     while page.get('recenttracks') is None:
-        print('has no tracks. Retrying!')
+        logging.info('has no tracks. Retrying!')
         page = recent_tracks(user, api_key, page_num)
 
     all_pages.append(page)
@@ -60,7 +53,7 @@ for page_num in range(total_pages, 0, -1):
 # Iterate through all pages
 num_pages = len(all_pages)
 for page_num, page in enumerate(all_pages):
-    print('Page', page_num + 1, 'of', num_pages)
+    logging.info('Page %d of %d' % (page_num + 1, num_pages))
 
     tracks = page['recenttracks']['track']
 
@@ -71,17 +64,17 @@ for page_num, page in enumerate(all_pages):
 
     # Get only the missing tracks.
     if page_num == 0:
-        print('Fist page')
+        logging.info('Fist page')
         nb_plays = lastfm_stats.nb_plays_for_first_page()
         tracks = tracks[0: nb_plays]
-        print('Getting ', nb_plays)
+        logging.info('Getting %d plays' % nb_plays)
 
     # On each page, iterate through all tracks
     num_tracks = len(tracks)
 
     json_tracks = []
     for track_num, track in enumerate(reversed(tracks)):
-        print('Track', track_num + 1, 'of', num_tracks)
+        logging.info('Track %d of %d' % (track_num + 1, num_tracks))
         json_tracks.append(json.dumps(track))
 
     try:
@@ -89,4 +82,4 @@ for page_num, page in enumerate(all_pages):
     except Exception:
         sys.exit(1)
 
-print('Done!', retrieve_total_json_tracks_from_db(), 'rows in table json_track.')
+logging.info('Done! %d rows in table json_track.' % retrieve_total_json_tracks_from_db())
