@@ -3,4 +3,5 @@ tops/
 venv/
 .idea/
 lastfm.sqlite
+db/
 liquibase/*.jar
