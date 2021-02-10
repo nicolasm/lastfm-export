@@ -6,6 +6,11 @@ This script imports your Last.fm listening history inside a MySQL/MariaDb or Sql
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
 
+## 2021-02-10
+
+- Add bash script to install Python modules
+- Update requirements.txt (3.9)
+
 ## 2020-05-29
 
 List of changes:
@@ -54,4 +59,4 @@ A Telegram bot in the bot module to get an artist/albums/tracks top
 - by last number of days: 7, 30, 90, 180, 365 or overall
 - by year
 
-Copyright (c) 2015-2020, Nicolas Meier
+Copyright (c) 2015-2021, Nicolas Meier
