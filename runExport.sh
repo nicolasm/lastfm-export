@@ -1,5 +1,5 @@
 #!/bin/bash -
-cd ~/Code/GitHub/lastfm-export/
+cd ~/Code/github/lastfm-export/
 if [ -r "./runConfig" ]; then
   . "./runConfig"
 fi
