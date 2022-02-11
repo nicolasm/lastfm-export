@@ -101,8 +101,8 @@ def plot_waffle(df, xcolumn):
     plt.figure(
         FigureClass=Waffle,
         dpi=600,
-        rows=30,
-        columns=90,
+        rows=50,
+        columns=50,
         values=play_dict,
         figsize=(20, 10),
         legend={'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'framealpha': 0},
