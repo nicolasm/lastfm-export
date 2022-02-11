@@ -1,10 +1,14 @@
 # lastfm-export
 ### Export your Last.fm tracks and import them into a MySQL/MariaDb or Sqlite database
 
-This script imports your Last.fm listening history inside a MySQL/MariaDb or Sqlite database.
+This project imports your Last.fm listening history inside a MySQL/MariaDb or Sqlite database.
 
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
+
+## 2022-02-11
+
+- Add support for Waffle plotType
 
 ## 2021-02-10
 

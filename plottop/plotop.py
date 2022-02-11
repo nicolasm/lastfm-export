@@ -3,6 +3,7 @@ from enum import Enum
 
 import colorlover as cl
 import matplotlib.pyplot as plt
+from pywaffle import Waffle
 
 colors = cl.to_numeric(cl.scales['12']['qual']['Set3'])
 
@@ -62,6 +63,7 @@ class Year(TimePeriod, object):
 class PlotType(Enum):
     Pie = 'plot_pie'
     BarH = 'plot_barh'
+    Waffle = 'plot_waffle'
 
     def __init__(self, method):
         self.method = method
@@ -93,14 +95,15 @@ def plot_barh(df, xcolumn):
     ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 5), rot=0,
                       color=selected_colors)
 
-    # # create a list to collect the plt.patches data
-    # totals = []
-    #
-    # # find the values and append to list
-    # for i in ax.patches:
-    #     totals.append(i.get_width())
-    #
-    # for i in ax.patches:
-    #     # get_width pulls left or right; get_y pushes up or down
-    #     ax.text(i.get_width() + .3, i.get_y(), i.get_width(), fontsize=15,
-    #             color='dimgrey')
+
+def plot_waffle(df, xcolumn):
+    play_dict = dict(zip(df[xcolumn], df['PlayCount']))
+    plt.figure(
+        FigureClass=Waffle,
+        dpi=600,
+        rows=30,
+        columns=90,
+        values=play_dict,
+        figsize=(20, 10),
+        legend={'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'framealpha': 0},
+    )
