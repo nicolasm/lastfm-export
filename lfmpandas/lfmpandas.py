@@ -9,7 +9,13 @@ from queries.tops import build_query_top_artists_for_duration, \
     build_query_top_artists_for_year, build_query_top_albums_for_duration, \
     build_query_top_albums_for_year, build_query_top_tracks_for_duration, \
     build_query_top_tracks_for_year, build_query_play_count_for_duration, \
-    build_query_play_count_for_year, build_query_play_count_by_month
+    build_query_play_count_for_year, build_query_play_count_by_month, \
+    build_query_top_artists_for_duration_with_remaining, \
+    build_query_top_albums_for_year_with_remaining, \
+    build_query_top_albums_for_duration_with_remaining, \
+    build_query_top_tracks_for_duration_with_remaining, \
+    build_query_top_tracks_for_year_with_remaining, \
+    build_query_top_artists_for_year_with_remaining
 
 
 class DataFrameColumn(Enum):
@@ -71,10 +77,8 @@ class AggregationType(Enum):
         self.over_type = over_type
         self.method = method
 
-    def retrieve(self, agg_value, limit, remove_remaining=True):
-        df = eval(self.method)(agg_value, limit)
-        if remove_remaining:
-            df = df[df[self.top.name.title()] != 'Remaining %ss' % self.get_top()]
+    def retrieve(self, agg_value, limit, with_remaining):
+        df = eval(self.method)(agg_value, limit, with_remaining)
         return df
 
     def get_top(self):
@@ -111,16 +115,21 @@ def retrieve_total_play_count_for_year(for_year):
     return rows[0]
 
 
-def retrieve_top_artists_for_duration_as_dataframe(nb_days, limit):
-    params = build_duration_params(nb_days, limit)
-    query = build_query_top_artists_for_duration(nb_days)
+def retrieve_top_artists_for_duration_as_dataframe(nb_days, limit, with_remaining):
+    params = build_duration_params(nb_days, limit, with_remaining)
+    query = build_query_top_artists_for_duration_with_remaining(nb_days)\
+        if with_remaining\
+        else build_query_top_artists_for_duration(nb_days)
     rows = select(query, params)
     return create_artists_dataframe(rows)
 
 
-def retrieve_top_artists_for_year_as_dataframe(for_year, limit):
-    query = build_query_top_artists_for_year()
-    rows = select(query, (for_year, limit))
+def retrieve_top_artists_for_year_as_dataframe(for_year, limit, with_remaining):
+    params = build_year_params(for_year, limit, with_remaining)
+    query = build_query_top_artists_for_year_with_remaining()\
+        if with_remaining\
+        else build_query_top_artists_for_year()
+    rows = select(query, params)
     return create_artists_dataframe(rows)
 
 
@@ -130,16 +139,20 @@ def create_artists_dataframe(rows):
     return df
 
 
-def retrieve_top_albums_for_duration_as_dataframe(nb_days, limit):
-    params = build_duration_params(nb_days, limit)
-    query = build_query_top_albums_for_duration(nb_days)
+def retrieve_top_albums_for_duration_as_dataframe(nb_days, limit, with_remaining):
+    params = build_duration_params(nb_days, limit, with_remaining)
+    query = build_query_top_albums_for_duration_with_remaining(nb_days)\
+        if with_remaining\
+        else build_query_top_albums_for_duration(nb_days)
     rows = select(query, params)
     return create_albums_dataframe(rows)
 
 
-def retrieve_top_albums_for_year_as_dataframe(for_year, limit):
-    query = build_query_top_albums_for_year()
-    rows = select(query, (for_year, limit))
+def retrieve_top_albums_for_year_as_dataframe(for_year, limit, with_remaining):
+    query = build_query_top_albums_for_year_with_remaining()\
+        if with_remaining\
+        else build_query_top_albums_for_year()
+    rows = select(query, build_year_params(for_year, limit, with_remaining))
     return create_albums_dataframe(rows)
 
 
@@ -151,24 +164,37 @@ def create_albums_dataframe(rows):
     return df
 
 
-def retrieve_top_tracks_for_duration_as_dataframe(nb_days, limit):
-    params = build_duration_params(nb_days, limit)
-    query = build_query_top_tracks_for_duration(nb_days)
+def retrieve_top_tracks_for_duration_as_dataframe(nb_days, limit, with_remaining):
+    params = build_duration_params(nb_days, limit, with_remaining)
+    query = build_query_top_tracks_for_duration_with_remaining(nb_days)\
+        if with_remaining\
+        else build_query_top_tracks_for_duration(nb_days)
     rows = select(query, params)
     return create_tracks_dataframe(rows)
 
 
-def build_duration_params(nb_days, limit):
+def retrieve_top_tracks_for_year_as_dataframe(for_year, limit, with_remaining):
+    query = build_query_top_tracks_for_year_with_remaining()\
+        if with_remaining\
+        else build_query_top_tracks_for_year()
+    rows = select(query, build_year_params(for_year, limit, with_remaining))
+    return create_tracks_dataframe(rows)
+
+
+def build_duration_params(nb_days, limit, with_remaining):
     params = (limit,)
     if nb_days.isdigit():
         params = (nb_days,) + params
+    if nb_days.isdigit() and with_remaining:
+        params = params + (nb_days,)
     return params
 
 
-def retrieve_top_tracks_for_year_as_dataframe(for_year, limit):
-    query = build_query_top_tracks_for_year()
-    rows = select(query, (for_year, limit))
-    return create_tracks_dataframe(rows)
+def build_year_params(year, limit, with_remaining):
+    params = (year, limit)
+    if with_remaining:
+        params = params + (year,)
+    return params
 
 
 def create_tracks_dataframe(rows):

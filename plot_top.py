@@ -28,8 +28,6 @@ def parse_args():
     time_periods = [e.get_value() for e in Duration]
     time_periods.extend(str(y) for y in years)
 
-    parser.add_argument('-r', '--request')
-
     parser.add_argument('-t', '--timePeriod', nargs='?', type=str,
                         choices=time_periods,
                         default=str(now.year))
@@ -42,6 +40,13 @@ def parse_args():
     parser.add_argument('-c', '--dataFrameColumn', nargs='?',
                         choices=[c.name for c in DataFrameColumn],
                         default=DataFrameColumn.ArtistAlbum.name)
+    parser.add_argument('-r', '--withRemaining',
+                        dest='withRemaining',
+                        action='store_true')
+    parser.add_argument('-w', '--withoutRemaining',
+                        dest='withRemaining',
+                        action='store_false')
+    parser.set_defaults(with_remaining=False)
 
     return parser.parse_args()
 
@@ -67,9 +72,14 @@ args = parse_args()
 agg_type = AggregationType.from_value(args.aggregationType)
 plot_type = PlotType.from_value(args.plotType)
 data_frame_column = DataFrameColumn.from_value(args.dataFrameColumn)
+with_remaining = args.withRemaining
 
 time_period = get_time_period(agg_type, args.timePeriod)
-bio = plot_top(time_period, agg_type, plot_type, data_frame_column)
+bio = plot_top(time_period,
+               agg_type,
+               plot_type,
+               data_frame_column,
+               with_remaining)
 
 bio.seek(0)
 image = Image.open(bio)

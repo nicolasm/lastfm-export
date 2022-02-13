@@ -15,11 +15,11 @@ from lfmpandas.lfmpandas import retrieve_play_count_by_month_as_dataframe
 conf = get_lastfm_conf()
 
 
-def plot_top(time_period, agg_type, plot_type, data_frame_column):
+def plot_top(time_period, agg_type, plot_type, data_frame_column, with_remaining):
     label = time_period.get_label()
     Path('./tops/%ss/%s' % (agg_type.get_over_type(), label.lower())).mkdir(
         parents=True, exist_ok=True)
-    df = agg_type.retrieve(time_period.get_value(), 20)
+    df = agg_type.retrieve(time_period.get_value(), 20, with_remaining)
     bio = plot_type.plot(df, data_frame_column)
     plt.close()
     return bio

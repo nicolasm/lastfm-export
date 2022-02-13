@@ -92,8 +92,7 @@ def plot_pie(df, legend_column):
 
 
 def plot_barh(df, xcolumn):
-    ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 5), rot=0,
-                      color=selected_colors)
+    ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 5), rot=0)
 
 
 def plot_waffle(df, xcolumn):
