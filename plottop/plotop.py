@@ -1,19 +1,15 @@
 import io
 from enum import Enum
 
-import colorlover as cl
 import matplotlib.pyplot as plt
 from pywaffle import Waffle
 
-colors = cl.to_numeric(cl.scales['12']['qual']['Set3'])
-
-int_colors = []
-for color in colors:
-    int_colors.append((int(color[0]), int(color[1]), int(color[2])))
-
-selected_colors = []
-for color in int_colors:
-    selected_colors.append('#%02x%02x%02x' % color)
+# https://sashamaps.net/docs/resources/20-colors/
+selected_colors = ['#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+                   '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4',
+                   '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000',
+                   '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9',
+                   '#ffffff', '#000000']
 
 
 class TimePeriod:
@@ -92,17 +88,23 @@ def plot_pie(df, legend_column):
 
 
 def plot_barh(df, xcolumn):
-    ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 5), rot=0)
+    ax = df.plot.barh(x=xcolumn, y='PlayCount', figsize=(20, 10),
+                      rot=0)
+    plt.yticks(fontsize=16)
 
 
 def plot_waffle(df, xcolumn):
+    num_colors = len(df)
     play_dict = dict(zip(df[xcolumn], df['PlayCount']))
+
     plt.figure(
         FigureClass=Waffle,
         dpi=600,
         rows=50,
         columns=50,
         values=play_dict,
+        labels=[f"{k} ({v})" for k, v in play_dict.items()],
+        colors=selected_colors[:num_colors],
         figsize=(20, 10),
-        legend={'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'framealpha': 0},
+        legend={'loc': 'upper left', 'bbox_to_anchor': (1, 1), 'framealpha': 0}
     )

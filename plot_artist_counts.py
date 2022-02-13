@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
 import logging
 from pathlib import Path
 
@@ -15,7 +16,15 @@ logging.basicConfig(
     format=f'%(asctime)s %(levelname)s %(message)s'
 )
 
-artist = 'Jack O\' the Clock'
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--artist', nargs=1, type=str)
+    return parser.parse_args()
+
+
+args = parse_args()
+artist = args.artist[0]
 bio = plot_artist_counts(artist)
 bio.seek(0)
 

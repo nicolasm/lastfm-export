@@ -82,4 +82,5 @@ for page_num, page in enumerate(all_pages):
     except Exception:
         sys.exit(1)
 
-logging.info('Done! %d rows in table json_track.' % retrieve_total_json_tracks_from_db())
+logging.info(
+    'Done! %d rows in table json_track.' % retrieve_total_json_tracks_from_db())

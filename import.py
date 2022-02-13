@@ -70,7 +70,8 @@ for (track_id, json_track) in new_plays:
                                     transformed_track['date_uts']
                                     ))
     except Exception as e:
-        logging.exception('An error occurred when inserting play into database!')
+        logging.exception(
+            'An error occurred when inserting play into database!')
         logging.error(track_name, ', ', artist_name)
         sys.exit(1)
 

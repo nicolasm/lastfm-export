@@ -53,9 +53,11 @@ def parse_args():
 
 def save_plot(agg_type, image, label, plot_type):
     image.save(
-        'tops/{over_type}s/{label}/top-{agg_type}s-{label}-{plot_type}.png'.format(
-            over_type=agg_type.get_over_type(), agg_type=agg_type.get_top(),
-            label=label.lower(), plot_type=plot_type.get_name()))
+        'tops/{over_type}s/{label}/top-{agg_type}s-{label}-{plot_type}.png'
+            .format(over_type=agg_type.get_over_type(),
+                    agg_type=agg_type.get_top(),
+                    label=label.lower(),
+                    plot_type=plot_type.get_name()))
 
 
 def get_time_period(agg_type, value):
@@ -68,7 +70,6 @@ def get_time_period(agg_type, value):
 
 
 args = parse_args()
-
 agg_type = AggregationType.from_value(args.aggregationType)
 plot_type = PlotType.from_value(args.plotType)
 data_frame_column = DataFrameColumn.from_value(args.dataFrameColumn)
