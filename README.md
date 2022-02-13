@@ -6,6 +6,13 @@ This project imports your Last.fm listening history inside a MySQL/MariaDb or Sq
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
 
+## 2022-02-13
+
+- Add counts to Waffle labels
+- Add withRemaining and withoutRemaining options to plot tops for duration/year
+- Change colors for a set of 22 distinct colors
+- Add command line support to plot artist counts
+
 ## 2022-02-11
 
 - Add support for Waffle plotType
