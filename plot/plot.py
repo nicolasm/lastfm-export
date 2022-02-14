@@ -6,6 +6,7 @@ from math import ceil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmpandas.artist_counts import retrieve_artist_counts, \
@@ -23,6 +24,26 @@ def plot_top(time_period, agg_type, plot_type, data_frame_column,
     df = agg_type.retrieve(time_period.get_value(), 20, with_remaining)
     bio = plot_type.plot(df, data_frame_column)
     plt.close()
+    return bio
+
+
+def plot_play_counts_last_n_years(last_n_years):
+    now = datetime.now()
+    years = range(conf['lastfm']['service']['startYear'], now.year + 1)
+    df_years = pd.DataFrame()
+    for year in years[-last_n_years:]:
+        df = retrieve_play_count_by_month_as_dataframe(str(year))
+        if df_years.get('Month') is None:
+            df_years["Month"] = df.Month
+        df_years[str(year)] = df.PlayCount
+
+    df_years.plot(x='Month', kind='bar', width=0.7)
+    plt.legend(loc="upper right")
+
+    bio = io.BytesIO()
+    plt.savefig(bio, format='png', dpi=150, bbox_inches='tight')
+    plt.close()
+
     return bio
 
 
