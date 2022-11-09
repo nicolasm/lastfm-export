@@ -82,7 +82,7 @@ def flatten(d, parent_key=''):
     items = []
     for k, v in d.items():
         new_key = parent_key + '_' + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, collections.abc.MutableMapping):
             items.extend(flatten(v, new_key).items())
         else:
             # Strip pound symbols from column names
