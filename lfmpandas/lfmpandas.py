@@ -97,8 +97,7 @@ class AggregationType(Enum):
 def retrieve_play_count_by_month_as_dataframe(year):
     query = build_query_play_count_by_month()
     rows = select(query, (year,))
-    df = pandas.DataFrame(rows, columns=['YearMonth', 'Month', 'PlayCount'],
-                          dtype='int64')
+    df = pandas.DataFrame(rows, columns=['YearMonth', 'Month', 'PlayCount'])
     df['YearMonth'] = pandas.to_datetime(df['YearMonth'], format='%Y-%m')
     df = df.sort_values(by='YearMonth')
     return df
@@ -136,7 +135,7 @@ def retrieve_top_artists_for_year_as_dataframe(for_year, limit, with_remaining):
 
 
 def create_artists_dataframe(rows):
-    df = pandas.DataFrame(rows, columns=['Artist', 'PlayCount'], dtype='int64')
+    df = pandas.DataFrame(rows, columns=['Artist', 'PlayCount'])
     df = df.sort_values(by='PlayCount', ascending=False)
     return df
 
@@ -160,8 +159,7 @@ def retrieve_top_albums_for_year_as_dataframe(for_year, limit, with_remaining):
 
 
 def create_albums_dataframe(rows):
-    df = pandas.DataFrame(rows, columns=['Album', 'Artist', 'PlayCount'],
-                          dtype='int64')
+    df = pandas.DataFrame(rows, columns=['Album', 'Artist', 'PlayCount'])
     df["ArtistAlbum"] = df["Artist"] + " - " + df["Album"]
     df = df.sort_values(by='PlayCount', ascending=False)
     return df
@@ -203,8 +201,7 @@ def build_year_params(year, limit, with_remaining):
 
 def create_tracks_dataframe(rows):
     df = pandas.DataFrame(rows,
-                          columns=['Track', 'Artist', 'Album', 'PlayCount'],
-                          dtype='int64')
+                          columns=['Track', 'Artist', 'Album', 'PlayCount'])
     df["ArtistAlbumTrack"] = df["Artist"] + " - " + df["Album"] + " - " + df[
         "Track"]
     df = df.sort_values(by='PlayCount', ascending=False);

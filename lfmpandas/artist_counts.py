@@ -21,14 +21,12 @@ def retrieve_artist_counts(artist_name):
 
     rows = select(queries[0], (artist_name,))
     df_albums = pandas.DataFrame(rows,
-                                 columns=['AlbumName', 'PlayCount'],
-                                 dtype='int64')
+                                 columns=['AlbumName', 'PlayCount'])
     df_albums = df_albums.sort_values(by='PlayCount')
 
     rows = select(queries[1], (artist_name,))
     df_artist = pandas.DataFrame(rows,
-                                 columns=['Year', 'PlayCount'],
-                                 dtype='int64')
+                                 columns=['Year', 'PlayCount'])
     df_artist['Year'] = df_artist['Year'].astype('int')
     df_artist = df_artist.set_index('Year')
 
@@ -46,14 +44,12 @@ def retrieve_artist_counts_for_year(artist_name, year):
 
     rows = select(queries[0], (artist_name, year))
     df_albums = pandas.DataFrame(rows,
-                                 columns=['AlbumName', 'PlayCount'],
-                                 dtype='int64')
+                                 columns=['AlbumName', 'PlayCount'])
     df_albums = df_albums.sort_values(by='PlayCount')
 
     rows = select(queries[1], (artist_name, year))
     df_artist = pandas.DataFrame(rows,
-                                 columns=['YearMonth', 'PlayCount'],
-                                 dtype='int64')
+                                 columns=['YearMonth', 'PlayCount'])
     df_artist = df_artist.set_index('YearMonth')
 
     year_months = ['%s-%02d' % (year, m) for m in range(1, 13)]
