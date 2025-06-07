@@ -6,6 +6,11 @@ This project imports your Last.fm listening history inside a MySQL/MariaDb or Sq
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
 
+## 2025-06-07
+
+- Fix DataFrame creation since last Pandas upgrade.
+- Add fallback value when retrieving XDG_CONFIG_HOME env variable
+
 ## 2022-02-13
 
 - Add counts to Waffle labels
