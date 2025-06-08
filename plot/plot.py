@@ -63,7 +63,7 @@ def plot_play_counts_by_month():
                 year = str(years[year_index])
                 df = retrieve_play_count_by_month_as_dataframe(year)
 
-                ax_array[i, j].plot(df.Month, df.PlayCount)
+                ax_array[i, j].plot(df['Month'].values, df['PlayCount'].values)
                 ax_array[i, j].set_title(year)
                 year_index = year_index + 1
 
