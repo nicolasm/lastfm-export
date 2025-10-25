@@ -46,6 +46,8 @@ List of changes:
     ```bash
     liquibase --logLevel DEBUG --changeLogFile db-changelog.xml update
     ```
+    - requirements package on the underlying OS:
+        - mariadb
 - for **Sqlite**:
     - create the database by running createSqliteDb.sh in the liquibase folder.
     - move the created lastfm.sqlite file to the parent directory.
