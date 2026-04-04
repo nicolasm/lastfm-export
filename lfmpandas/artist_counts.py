@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pandas
 
+from lfmconf.lfmconf import get_lastfm_conf
+from lfmdb.lfmdb import select
 from queries.artist_counts import get_artist_counts_query_overall, \
     get_artist_counts_query_year
-from lfmdb.lfmdb import select
-from lfmconf.lfmconf import get_lastfm_conf
 
 conf = get_lastfm_conf()
 start_year = conf['lastfm']['service']['startYear']

@@ -1,5 +1,6 @@
-import yaml
 import os
+
+import yaml
 
 XDG_CONFIG_HOME = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
 

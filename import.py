@@ -7,9 +7,9 @@ import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmdb import lfmdb
+from queries.inserts import get_query_insert_play
 from stats.stats import process_track, retrieve_total_plays_from_db, \
     retrieve_total_json_tracks_from_db
-from queries.inserts import get_query_insert_play
 
 logging.basicConfig(
     level=logging.INFO,

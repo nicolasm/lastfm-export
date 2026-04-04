@@ -1,6 +1,6 @@
 lastfm:
     service:
-        username: usernmae
+        username: username
         apiKey: apikey
         startYear: 2006
     db:
@@ -17,3 +17,5 @@ plot:
 telegram:
     token: token
     chatId: chatid
+excelExport:
+    limit: 20

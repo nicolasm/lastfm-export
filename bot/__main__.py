@@ -8,8 +8,8 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmpandas.lfmpandas import AggregationType, DataFrameColumn, Top, \
     OverType
-from plottop.plotop import Duration, Year, PlotType
 from plot.plot import plot_top
+from plottop.plotop import Duration, Year, PlotType
 
 ENTITY, TIME_PERIOD_TYPE, TIME_PERIOD, PLOT_TYPE, COLUMN = range(5)
 

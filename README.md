@@ -1,10 +1,17 @@
 # lastfm-export
-### Export your Last.fm tracks and import them into a MySQL/MariaDb or Sqlite database
+### Export your Last.fm tracks and import them into a Sqlite database
 
-This project imports your Last.fm listening history inside a MySQL/MariaDb or Sqlite database.
+This project imports your Last.fm listening history inside a Sqlite database.
 
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
+
+## 2026-04-04
+
+- Remove MySQL/MariaDb support
+- Add Excel listening history export
+- Add Excel tops export
+- Add Markdown tops export
 
 ## 2025-06-07
 

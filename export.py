@@ -3,9 +3,9 @@
 
 #######################################################################
 # This script imports your Last.fm listening history                  #
-# inside a MySQL or Sqlite database.                                  #
+# inside a Sqlite database          .                                 #
 #                                                                     #
-# Copyright (c) 2015-2020, Nicolas Meier                              #
+# Copyright (c) 2015-2026, Nicolas Meier                              #
 #######################################################################
 
 import json
@@ -14,9 +14,9 @@ import sys
 
 from lfmconf.lfmconf import get_lastfm_conf
 from lfmdb import lfmdb
+from queries.inserts import get_query_insert_json_track
 from stats.stats import LastfmStats, recent_tracks, \
     retrieve_total_json_tracks_from_db
-from queries.inserts import get_query_insert_json_track
 
 logging.basicConfig(
     level=logging.INFO,

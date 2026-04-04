@@ -1,7 +1,6 @@
 from lfmconf.lfmconf import get_lastfm_conf
 
 conf = get_lastfm_conf()
-dbms = conf['lastfm']['db']['dbms']
 
 sqlite_month = """
     substr('JanFebMarAprMayJunJulAugSepOctNovDec',

@@ -1,8 +1,6 @@
-from lfmconf.lfmconf import get_lastfm_conf
-
 query_play_count_by_month = """
     select * from view_play_count_by_month v
-    where substr(v.yr_month, 1, 4) =
+    where substr(v.yr_month, 1, 4) = ?
 """
 
 query_top_with_remaining = """
@@ -35,6 +33,7 @@ query_top_albums_with_remaining = query_top_with_remaining + \
     -
     (select sum(play_count) from top)) as play_count
 """
+
 query_top_tracks_with_remaining = query_top_with_remaining + \
 """
     union all
@@ -86,15 +85,9 @@ query_play_count = """
     {condition}
 """
 
-conf = get_lastfm_conf()
-dbms = conf['lastfm']['db']['dbms']
-
 
 def build_query_play_count_by_month():
-    if dbms == 'mysql':
-        return query_play_count_by_month + '%s'
-    elif dbms == 'sqlite':
-        return query_play_count_by_month + '?'
+    return query_play_count_by_month
 
 
 def build_query_play_count_for_duration(duration):
@@ -111,16 +104,7 @@ def build_query_top_artists_for_duration_with_remaining(duration):
 
 def build_query_top_artists_for_duration(duration):
     condition = build_duration_condition(duration)
-    return query_top_artists.format(condition=condition) + add_limit()
-
-
-def add_limit():
-    clause = 'limit '
-    if dbms == 'mysql':
-        clause += '%s'
-    elif dbms == 'sqlite':
-        clause += '?'
-    return clause
+    return query_top_artists.format(condition=condition) + 'limit ?'
 
 
 def build_query_top_albums_for_duration_with_remaining(duration):
@@ -132,7 +116,7 @@ def build_query_top_albums_for_duration_with_remaining(duration):
 
 def build_query_top_albums_for_duration(duration):
     condition = build_duration_condition(duration)
-    return query_top_albums.format(condition=condition) + add_limit()
+    return query_top_albums.format(condition=condition) + 'limit ?'
 
 
 def build_query_top_tracks_for_duration_with_remaining(duration):
@@ -144,7 +128,7 @@ def build_query_top_tracks_for_duration_with_remaining(duration):
 
 def build_query_top_tracks_for_duration(duration):
     condition = build_duration_condition(duration)
-    return query_top_tracks.format(condition=condition) + add_limit()
+    return query_top_tracks.format(condition=condition) + 'limit ?'
 
 
 def build_query_play_count_for_year():
@@ -161,7 +145,7 @@ def build_query_top_artists_for_year_with_remaining():
 
 def build_query_top_artists_for_year():
     condition = build_year_condition()
-    return query_top_artists.format(condition=condition) + add_limit()
+    return query_top_artists.format(condition=condition) + 'limit ?'
 
 
 def build_query_top_albums_for_year_with_remaining():
@@ -173,7 +157,7 @@ def build_query_top_albums_for_year_with_remaining():
 
 def build_query_top_albums_for_year():
     condition = build_year_condition()
-    return query_top_albums.format(condition=condition) + add_limit()
+    return query_top_albums.format(condition=condition) + 'limit ?'
 
 
 def build_query_top_tracks_for_year_with_remaining():
@@ -185,24 +169,14 @@ def build_query_top_tracks_for_year_with_remaining():
 
 def build_query_top_tracks_for_year():
     condition = build_year_condition()
-    return query_top_tracks.format(condition=condition) + add_limit()
+    return query_top_tracks.format(condition=condition) + 'limit ?'
 
 
 def build_duration_condition(duration):
-    condition = ''
     if duration.isdigit():
-        if dbms == 'mysql':
-            condition = 'and p.play_date > now() + interval - %s day'
-        elif dbms == 'sqlite':
-            condition =\
-                'and date(p.play_date) > date(\'now\', \'-\' || ? || \' day\')'
-    return condition
+        return "and date(p.play_date) > date('now', '-' || ? || ' day')"
+    return ''
 
 
 def build_year_condition():
-    condition = ''
-    if dbms == 'mysql':
-        condition = 'and year(p.play_date) = %s'
-    elif dbms == 'sqlite':
-        condition = 'and strftime(\'%Y\', p.play_date) = ?'
-    return condition
+    return "and strftime('%Y', p.play_date) = ?"

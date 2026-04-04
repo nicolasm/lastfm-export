@@ -4,8 +4,8 @@ import urllib
 
 import requests
 
-from queries.counts import get_query_count_json_tracks, get_query_count_plays
 from lfmdb import lfmdb
+from queries.counts import get_query_count_json_tracks, get_query_count_plays
 
 api_url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks' \
           '&user=%s&api_key=%s&format=json&page=%s&limit=%s'
