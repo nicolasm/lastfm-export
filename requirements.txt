@@ -37,5 +37,5 @@ tornado==6.5.5
 tzdata==2024.2
 tzlocal==4.1
 unicode==2.8
-urllib3==2.6.3
+urllib3==2.7.0
 waffle==0.5.0
