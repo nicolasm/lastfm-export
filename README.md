@@ -6,6 +6,10 @@ This project imports your Last.fm listening history inside a Sqlite database.
 The first run might take quite some time depending on your listening history.
 But next runs will be much faster as only missing plays are imported into the database.
 
+## 2026-10-08
+
+- Remove Markdown export
+
 ## 2026-04-04
 
 - Remove MySQL/MariaDb support
